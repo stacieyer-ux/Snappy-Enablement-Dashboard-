@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Snappy Enablement Dashboard</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f5f5f3; color: #1a1a18; min-height: 100vh; padding: 2rem 1.5rem; }
+  .container { max-width: 1100px; margin: 0 auto; }
+  .top-bar { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 1.75rem; flex-wrap: wrap; gap: 12px; }
+  .top-bar h1 { font-size: 20px; font-weight: 600; color: #1a1a18; }
+  .top-bar .sub { font-size: 13px; color: #6b6b67; margin-top: 3px; }
+  .metric-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 1.5rem; }
+  .mcard { background: #fff; border: 1px solid #e5e5e0; border-radius: 10px; padding: 16px 18px; }
+  .mcard .mlabel { font-size: 12px; color: #6b6b67; margin-bottom: 6px; }
+  .mcard .mvalue { font-size: 24px; font-weight: 600; color: #1a1a18; }
+  .mcard .msub { font-size: 12px; color: #6b6b67; margin-top: 2px; }
+  .filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 1.25rem; }
+  .filters select { font-size: 13px; padding: 7px 12px; border-radius: 8px; border: 1px solid #d5d5d0; background: #fff; color: #1a1a18; cursor: pointer; }
+  .filters select:hover { border-color: #aaa; }
+  .table-wrap { background: #fff; border: 1px solid #e5e5e0; border-radius: 12px; overflow: hidden; margin-bottom: 1.5rem; overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 750px; }
+  th { text-align: left; font-weight: 600; font-size: 12px; color: #6b6b67; padding: 10px 12px; border-bottom: 1px solid #e5e5e0; white-space: nowrap; cursor: pointer; user-select: none; background: #fafaf8; }
+  th:hover { color: #1a1a18; background: #f0f0ec; }
+  th .sort-icon { margin-left: 4px; font-size: 10px; opacity: 0.5; }
+  th.active-sort { color: #1a1a18; }
+  th.active-sort .sort-icon { opacity: 1; }
+  td { padding: 10px 12px; border-bottom: 1px solid #f0f0ec; color: #1a1a18; white-space: nowrap; vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr.data-row:hover td { background: #fafaf8; }
+  .bar-wrap { display: flex; align-items: center; gap: 7px; }
+  .bar-bg { width: 56px; height: 5px; background: #e8e8e4; border-radius: 3px; flex-shrink: 0; }
+  .bar-fill { height: 5px; border-radius: 3px; transition: width 0.3s ease; }
+  .badge { display: inline-block; font-size: 11px; padding: 2px 9px; border-radius: 20px; font-weight: 600; }
+  .badge-high { background: #eaf3de; color: #3b6d11; }
+  .badge-mid { background: #faeeda; color: #854f0b; }
+  .badge-low { background: #fcebeb; color: #a32d2d; }
+  .expand-btn { font-size: 11px; color: #aaa; background: none; border: none; cursor: pointer; padding: 2px 4px; border-radius: 4px; }
+  .expand-btn:hover { background: #f0f0ec; color: #1a1a18; }
+  .detail-row td { background: #fafaf8; border-bottom: 1px solid #e5e5e0; }
+  .detail-inner { display: flex; flex-wrap: wrap; gap: 12px 24px; padding: 6px 4px; }
+  .detail-inner .detail-block { font-size: 12px; color: #6b6b67; line-height: 1.7; }
+  .detail-inner .detail-block strong { color: #1a1a18; font-weight: 600; }
+  .detail-inner .detail-block .dlabel { font-size: 11px; font-weight: 600; color: #aaa; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 2px; }
+  .section-title { font-size: 13px; font-weight: 600; color: #6b6b67; margin: 1.5rem 0 10px; text-transform: uppercase; letter-spacing: 0.04em; }
+  .insight-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; margin-bottom: 1.75rem; }
+  .icard { background: #fff; border: 1px solid #e5e5e0; border-radius: 10px; padding: 14px 16px; }
+  .icard .ititle { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 6px; }
+  .icard .inames { font-size: 12px; color: #1a1a18; line-height: 1.8; }
+  .icard .iempty { font-size: 12px; color: #aaa; font-style: italic; }
+  .method-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px; margin-bottom: 1rem; }
+  .meth { background: #fff; border: 1px solid #e5e5e0; border-radius: 10px; padding: 16px 18px; }
+  .meth h3 { font-size: 13px; font-weight: 600; color: #1a1a18; margin-bottom: 10px; }
+  .meth ul { list-style: none; }
+  .meth li { font-size: 12px; color: #6b6b67; padding: 4px 0; border-bottom: 1px solid #f0f0ec; line-height: 1.5; }
+  .meth li:last-child { border-bottom: none; }
+  .meth li strong { color: #1a1a18; font-weight: 600; }
+  .meth li em { color: #aaa; font-style: italic; font-size: 11px; }
+  .footer-note { font-size: 11px; color: #aaa; line-height: 1.8; margin-top: 0.75rem; padding-top: 1rem; border-top: 1px solid #e5e5e0; }
+  .snappy-logo { font-size: 13px; font-weight: 700; color: #1a1a18; letter-spacing: -0.02em; }
+  .snappy-logo span { color: #d85a30; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="top-bar">
+    <div>
+      <div class="snappy-logo">snappy<span>.</span></div>
+      <h1 style="margin-top:6px;">Enablement Dashboard</h1>
+      <div class="sub">Apr 4 – May 4, 2026 &nbsp;·&nbsp; All scores normalized 0–100%</div>
+    </div>
+  </div>
+
+  <div class="metric-row" id="summary-cards"></div>
+
+  <div class="filters">
+    <select id="filter-role" onchange="render()">
+      <option value="">All roles</option>
+      <option value="Sales Rep">Sales Rep</option>
+      <option value="CSM">CSM</option>
+      <option value="Manager">Manager</option>
+      <option value="IC">IC</option>
+    </select>
+    <select id="filter-manager" onchange="render()">
+      <option value="">All managers</option>
+    </select>
+    <select id="filter-status" onchange="render()">
+      <option value="">All scores</option>
+      <option value="high">High (70%+)</option>
+      <option value="mid">Mid (40–69%)</option>
+      <option value="low">Low (under 40%)</option>
+    </select>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:32px;"></th>
+          <th onclick="setSort('name')" id="th-name">Rep <span class="sort-icon">↕</span></th>
+          <th onclick="setSort('manager')" id="th-manager">Manager <span class="sort-icon">↕</span></th>
+          <th onclick="setSort('role')" id="th-role">Role <span class="sort-icon">↕</span></th>
+          <th onclick="setSort('learning')" id="th-learning">Learning <span class="sort-icon">↕</span></th>
+          <th onclick="setSort('prospecting')" id="th-prospecting">Prospecting <span class="sort-icon">↕</span></th>
+          <th onclick="setSort('callreview')" id="th-callreview">Call Review <span class="sort-icon">↕</span></th>
+          <th onclick="setSort('score')" id="th-score">Score <span class="sort-icon">↕</span></th>
+          <th onclick="setSort('tier')" id="th-tier">Tier <span class="sort-icon">↕</span></th>
+        </tr>
+      </thead>
+      <tbody id="table-body"></tbody>
+    </table>
+  </div>
+
+  <div class="section-title">Diagnostic insights</div>
+  <div class="insight-grid" id="insights"></div>
+
+  <div class="section-title">How scores are calculated</div>
+  <div class="method-grid">
+    <div class="meth">
+      <h3>Learning (Juno Journey)</h3>
+      <ul>
+        <li><strong>Financial Literacy</strong> — Not started = 0, In progress = 50%, Complete = 100%</li>
+        <li><strong>Moments to Momentum (M2M)</strong> — Not started = 0, In progress = 50%, Complete = 100%</li>
+        <li><strong>Score</strong> = average of both courses</li>
+      </ul>
+    </div>
+    <div class="meth">
+      <h3>Prospecting (Sales Reps only)</h3>
+      <ul>
+        <li><strong>Sales Navigator</strong> — average of 4 inputs:</li>
+        <li>Days active — target 12/mo</li>
+        <li>Searches performed — target 60/mo</li>
+        <li>Profile views — target 100/mo</li>
+        <li>InMails sent — target 12/mo</li>
+        <li><strong>ZoomInfo</strong> — average of 3 inputs:</li>
+        <li>Logins — target 20/mo</li>
+        <li>Credits used — target 100/mo <em>(based on team avg)</em></li>
+        <li>Searches — target 100/mo</li>
+        <li><strong>Score</strong> = avg(Sales Nav score, ZoomInfo score)</li>
+      </ul>
+    </div>
+    <div class="meth">
+      <h3>Call Review (Gong)</h3>
+      <ul>
+        <li><strong>Calls listened</strong> — target 12/mo (3 per week)</li>
+        <li>Activity window: last 30 days</li>
+        <li><strong>Score</strong> = calls listened / 12, capped at 100%</li>
+      </ul>
+    </div>
+    <div class="meth">
+      <h3>Role weights</h3>
+      <ul>
+        <li><strong>Sales Rep</strong> — 30% Learning, 35% Prospecting, 35% Call Review</li>
+        <li><strong>CSM</strong> — 60% Learning, 40% Call Review</li>
+        <li><strong>Manager</strong> — 60% Team avg, 25% Call Review, 15% Learning</li>
+        <li><strong>Amelia Cotton</strong> — 100% Call Review</li>
+        <li><strong>Christina Lian Nunez</strong> — 50% Learning, 50% Call Review</li>
+        <li><strong>Staci Eyer</strong> — 60% Amelia's Call Review, 40% own Call Review</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="footer-note">
+    All inputs capped at their target (max contribution = 100%). Data window = last 30 days. Prospecting applies to Sales Reps only. Manager scores roll up recursively from direct reports. ZoomInfo credit benchmark based on 30-day team average. Sales Navigator searches benchmark based on industry best practices.
+  </div>
+
+</div>
+
+<script>
+const JUNO={
+  "Allison Little":{fl:1,m2m:1},"Amelia Calin":{fl:1,m2m:1},"Amelia Cotton":{fl:1,m2m:1},
+  "Ashley Phillips":{fl:1,m2m:1},"Blake Kramer":{fl:1,m2m:0},"Bryce Green":{fl:1,m2m:0.5},
+  "Carolina Santrovitsch":{fl:1,m2m:1},"Christina Lian Nunez":{fl:1,m2m:1},
+  "Daniel Max Held":{fl:1,m2m:0.5},"Dillon Brady":{fl:1,m2m:1},"Dominique Sorresso":{fl:1,m2m:1},
+  "Elana Kathein":{fl:1,m2m:1},"Elizabeth Speracino":{fl:1,m2m:1},"Elliot Levine":{fl:1,m2m:1},
+  "Eric Mendelsohn":{fl:1,m2m:1},"Gabby Ratte":{fl:1,m2m:1},"Gil Schpero":{fl:1,m2m:0.5},
+  "Greg Ehrlich":{fl:0,m2m:0},"Isabel Cuevas":{fl:1,m2m:0.5},"Jackie Yin McAfee":{fl:1,m2m:1},
+  "Jake Shinder":{fl:1,m2m:1},"Jared Center":{fl:1,m2m:1},"Jennifer Rodriguez":{fl:1,m2m:0.5},
+  "John Scanlon":{fl:1,m2m:1},"Katherine Hooper":{fl:1,m2m:1},"Kha Thai Vo":{fl:1,m2m:0.5},
+  "Kyle Dovenbarger":{fl:1,m2m:0},"Libby Morningstar":{fl:0,m2m:0},"Max Fortin":{fl:1,m2m:1},
+  "Megan Buche":{fl:1,m2m:1},"Mike Portela":{fl:0,m2m:0},"Niki Barry":{fl:1,m2m:1},
+  "Nora S. Kosumi":{fl:1,m2m:1},"Rebecca Emont":{fl:1,m2m:1},"Ross Langley":{fl:0,m2m:0},
+  "Ryan Lerner":{fl:1,m2m:1},"Scott McKeen":{fl:1,m2m:0.5},"Sean Caulfield":{fl:1,m2m:0},
+  "Staci Eyer":{fl:1,m2m:1},"Stephanie Young":{fl:1,m2m:1},"Tal Keshet":{fl:1,m2m:0.5},
+  "Tyler Williams":{fl:1,m2m:1},"Valentina Arbelaez":{fl:1,m2m:0.5},"Zach Alpert":{fl:0,m2m:0},
+};
+
+const GONG={
+  "Allison Little":8,"Amelia Calin":0,"Amelia Cotton":30,"Ashley Phillips":0,
+  "Blake Kramer":0,"Bryce Green":1,"Carolina Santrovitsch":3,"Christina Lian Nunez":2,
+  "Daniel Max Held":1,"Dillon Brady":2,"Dominique Sorresso":1,"Elana Kathein":20,
+  "Elizabeth Speracino":16,"Elliot Levine":4,"Eric Mendelsohn":0,"Gabby Ratte":24,
+  "Gil Schpero":0,"Greg Ehrlich":0,"Isabel Cuevas":59,"Jackie Yin McAfee":2,
+  "Jake Shinder":1,"Jared Center":5,"Jennifer Rodriguez":2,"John Scanlon":1,
+  "Katherine Hooper":0,"Kha Thai Vo":0,"Kyle Dovenbarger":0,"Libby Morningstar":0,
+  "Max Fortin":1,"Megan Buche":3,"Mike Portela":15,"Niki Barry":0,"Nora S. Kosumi":4,
+  "Rebecca Emont":0,"Ross Langley":0,"Ryan Lerner":3,"Scott McKeen":13,"Sean Caulfield":2,
+  "Staci Eyer":5,"Stephanie Young":1,"Tal Keshet":2,"Tyler Williams":1,
+  "Valentina Arbelaez":3,"Zach Alpert":8,
+};
+
+const SALESNAV={
+  "Allison Little":{days:12,searches:2,views:38,inmails:0},
+  "Ashley Phillips":{days:14,searches:7,views:134,inmails:0},
+  "Blake Kramer":{days:0,searches:0,views:0,inmails:0},
+  "Bryce Green":{days:0,searches:0,views:0,inmails:0},
+  "Daniel Max Held":{days:29,searches:200,views:443,inmails:0},
+  "Elliot Levine":{days:29,searches:378,views:1189,inmails:3},
+  "Elizabeth Speracino":{days:0,searches:0,views:0,inmails:0},
+  "Eric Mendelsohn":{days:30,searches:117,views:289,inmails:99},
+  "Gabby Ratte":{days:15,searches:0,views:21,inmails:0},
+  "Greg Ehrlich":{days:0,searches:0,views:0,inmails:0},
+  "Isabel Cuevas":{days:0,searches:0,views:0,inmails:0},
+  "Jackie Yin McAfee":{days:26,searches:22,views:13,inmails:0},
+  "Jennifer Rodriguez":{days:0,searches:0,views:0,inmails:0},
+  "John Scanlon":{days:13,searches:30,views:404,inmails:0},
+  "Katherine Hooper":{days:22,searches:34,views:168,inmails:27},
+  "Kha Thai Vo":{days:0,searches:0,views:0,inmails:0},
+  "Libby Morningstar":{days:25,searches:0,views:3,inmails:0},
+  "Max Fortin":{days:29,searches:137,views:120,inmails:0},
+  "Megan Buche":{days:0,searches:0,views:0,inmails:0},
+  "Niki Barry":{days:11,searches:30,views:48,inmails:0},
+  "Nora S. Kosumi":{days:30,searches:88,views:171,inmails:1},
+  "Rebecca Emont":{days:20,searches:10,views:101,inmails:0},
+  "Ross Langley":{days:22,searches:118,views:60,inmails:0},
+  "Ryan Lerner":{days:18,searches:0,views:6,inmails:0},
+  "Scott McKeen":{days:0,searches:0,views:0,inmails:0},
+  "Tyler Williams":{days:22,searches:2,views:5,inmails:0},
+  "Valentina Arbelaez":{days:7,searches:0,views:11,inmails:0},
+  "Amelia Cotton":{days:18,searches:11,views:31,inmails:0},
+};
+
+const ZOOMINFO={
+  "Ashley Phillips":{logins:6,credits:0,searches:8},
+  "Blake Kramer":{logins:0,credits:0,searches:0},
+  "Daniel Max Held":{logins:9,credits:0,searches:0},
+  "Elliot Levine":{logins:27,credits:81,searches:101},
+  "Elizabeth Speracino":{logins:3,credits:0,searches:0},
+  "Eric Mendelsohn":{logins:11,credits:0,searches:13},
+  "Gabby Ratte":{logins:6,credits:0,searches:4},
+  "Greg Ehrlich":{logins:0,credits:0,searches:0},
+  "Isabel Cuevas":{logins:61,credits:190,searches:279},
+  "Jackie Yin McAfee":{logins:20,credits:427,searches:188},
+  "Jennifer Rodriguez":{logins:37,credits:193,searches:34},
+  "John Scanlon":{logins:6,credits:4,searches:0},
+  "Katherine Hooper":{logins:5,credits:35,searches:18},
+  "Kha Thai Vo":{logins:0,credits:0,searches:0},
+  "Libby Morningstar":{logins:0,credits:0,searches:0},
+  "Max Fortin":{logins:0,credits:0,searches:0},
+  "Niki Barry":{logins:4,credits:0,searches:1},
+  "Nora S. Kosumi":{logins:0,credits:0,searches:0},
+  "Ross Langley":{logins:0,credits:0,searches:0},
+  "Ryan Lerner":{logins:3,credits:0,searches:1},
+  "Scott McKeen":{logins:0,credits:0,searches:0},
+  "Valentina Arbelaez":{logins:0,credits:0,searches:0},
+};
+
+const SN_CAP={days:12,searches:60,views:100,inmails:12};
+const ZI_CAP={logins:20,credits:100,searches:100};
+
+const REPS=[
+  {name:"Allison Little",       manager:"Hani Goldstein",     role:"Manager"},
+  {name:"Amelia Calin",         manager:"Jared Center",       role:"CSM"},
+  {name:"Amelia Cotton",        manager:"Staci Eyer",         role:"IC"},
+  {name:"Ashley Phillips",      manager:"Elana Kathein",      role:"Sales Rep"},
+  {name:"Blake Kramer",         manager:"Kyle Dovenbarger",   role:"Sales Rep"},
+  {name:"Bryce Green",          manager:"Jared Center",       role:"CSM"},
+  {name:"Carolina Santrovitsch",manager:"Jared Center",       role:"CSM"},
+  {name:"Christina Lian Nunez", manager:"Dominique Sorresso", role:"IC"},
+  {name:"Daniel Max Held",      manager:"Tal Keshet",         role:"Sales Rep"},
+  {name:"Dillon Brady",         manager:"Allison Little",     role:"CSM"},
+  {name:"Dominique Sorresso",   manager:"Hani Goldstein",     role:"Manager"},
+  {name:"Elana Kathein",        manager:"Dominique Sorresso", role:"Manager"},
+  {name:"Elizabeth Speracino",  manager:"Elana Kathein",      role:"Sales Rep"},
+  {name:"Elliot Levine",        manager:"Kyle Dovenbarger",   role:"Sales Rep"},
+  {name:"Eric Mendelsohn",      manager:"Kyle Dovenbarger",   role:"Sales Rep"},
+  {name:"Gabby Ratte",          manager:"Elana Kathein",      role:"Sales Rep"},
+  {name:"Gil Schpero",          manager:"Tal Keshet",         role:"Manager"},
+  {name:"Greg Ehrlich",         manager:"Jake Shinder",       role:"Sales Rep"},
+  {name:"Isabel Cuevas",        manager:"Elana Kathein",      role:"Sales Rep"},
+  {name:"Jackie Yin McAfee",    manager:"Elana Kathein",      role:"Sales Rep"},
+  {name:"Jake Shinder",         manager:"Yoav Rand",          role:"Manager"},
+  {name:"Jared Center",         manager:"Dominique Sorresso", role:"Manager"},
+  {name:"Jennifer Rodriguez",   manager:"Elana Kathein",      role:"Sales Rep"},
+  {name:"John Scanlon",         manager:"Tal Keshet",         role:"Sales Rep"},
+  {name:"Katherine Hooper",     manager:"Kyle Dovenbarger",   role:"Sales Rep"},
+  {name:"Kha Thai Vo",          manager:"Tal Keshet",         role:"Sales Rep"},
+  {name:"Kyle Dovenbarger",     manager:"Dominique Sorresso", role:"Manager"},
+  {name:"Libby Morningstar",    manager:"Elana Kathein",      role:"Sales Rep"},
+  {name:"Max Fortin",           manager:"Gil Schpero",        role:"Sales Rep"},
+  {name:"Megan Buche",          manager:"Jared Center",       role:"CSM"},
+  {name:"Mike Portela",         manager:"Allison Little",     role:"CSM"},
+  {name:"Niki Barry",           manager:"Kyle Dovenbarger",   role:"Sales Rep"},
+  {name:"Nora S. Kosumi",       manager:"Gil Schpero",        role:"Sales Rep"},
+  {name:"Rebecca Emont",        manager:"Jared Center",       role:"CSM"},
+  {name:"Ross Langley",         manager:"Jake Shinder",       role:"Sales Rep"},
+  {name:"Ryan Lerner",          manager:"Gil Schpero",        role:"Sales Rep"},
+  {name:"Scott McKeen",         manager:"Tal Keshet",         role:"Sales Rep"},
+  {name:"Sean Caulfield",       manager:"Jake Shinder",       role:"CSM"},
+  {name:"Staci Eyer",           manager:"Dominique Sorresso", role:"IC"},
+  {name:"Stephanie Young",      manager:"Allison Little",     role:"CSM"},
+  {name:"Tal Keshet",           manager:"Hani Goldstein",     role:"Manager"},
+  {name:"Tyler Williams",       manager:"Jared Center",       role:"CSM"},
+  {name:"Valentina Arbelaez",   manager:"Gil Schpero",        role:"Sales Rep"},
+  {name:"Zach Alpert",          manager:"Allison Little",     role:"CSM"},
+];
+
+function cap(v,mx){return Math.min(v/mx,1);}
+function getL(name){const j=JUNO[name];return j?(j.fl+j.m2m)/2:0;}
+function getE(name){return Math.min((GONG[name]||0)/12,1);}
+function getSN(name){const s=SALESNAV[name];if(!s)return 0;return(cap(s.days,SN_CAP.days)+cap(s.searches,SN_CAP.searches)+cap(s.views,SN_CAP.views)+cap(s.inmails,SN_CAP.inmails))/4;}
+function getZI(name){const z=ZOOMINFO[name];if(!z)return 0;return(cap(z.logins,ZI_CAP.logins)+cap(z.credits,ZI_CAP.credits)+cap(z.searches,ZI_CAP.searches))/3;}
+function getP(name){return(getSN(name)+getZI(name))/2;}
+
+const cache={};
+function calcScore(rep){
+  if(cache[rep.name])return cache[rep.name];
+  const l=getL(rep.name),e=getE(rep.name);
+  let s;
+  if(rep.name==="Staci Eyer"){
+    s={total:0.6*getE("Amelia Cotton")+0.4*e,L:l,P:null,E:e};
+  } else if(rep.name==="Amelia Cotton"){
+    s={total:e,L:l,P:null,E:e};
+  } else if(rep.name==="Christina Lian Nunez"){
+    s={total:0.5*l+0.5*e,L:l,P:null,E:e};
+  } else if(rep.role==="Manager"){
+    const directs=REPS.filter(r=>r.manager===rep.name&&r.name!==rep.name);
+    const scores=directs.map(d=>calcScore(d).total);
+    const avg=scores.length?scores.reduce((a,b)=>a+b,0)/scores.length:0;
+    s={total:0.6*avg+0.25*e+0.15*l,L:l,P:null,E:e,teamAvg:avg,directCount:directs.length};
+  } else if(rep.role==="CSM"){
+    s={total:0.6*l+0.4*e,L:l,P:null,E:e};
+  } else {
+    const p=getP(rep.name);
+    const sn=SALESNAV[rep.name]||{days:0,searches:0,views:0,inmails:0};
+    const zi=ZOOMINFO[rep.name]||{logins:0,credits:0,searches:0};
+    s={total:0.30*l+0.35*p+0.35*e,L:l,P:p,E:e,
+      snRaw:sn,ziRaw:zi,snPct:Math.round(getSN(rep.name)*100),ziPct:Math.round(getZI(rep.name)*100)};
+  }
+  cache[rep.name]=s;
+  return s;
+}
+REPS.forEach(r=>calcScore(r));
+
+function pct(v){return v===null?null:Math.round(v*100);}
+function tierInfo(v){if(v>=0.7)return{l:"High",c:"badge-high"};if(v>=0.4)return{l:"Mid",c:"badge-mid"};return{l:"Low",c:"badge-low"};}
+function tierOrder(v){if(v>=0.7)return 0;if(v>=0.4)return 1;return 2;}
+function barColor(v){if(v>=0.7)return"#3b6d11";if(v>=0.4)return"#854f0b";return"#a32d2d";}
+function barBg(v){if(v>=0.7)return"#eaf3de";if(v>=0.4)return"#faeeda";return"#fcebeb";}
+
+function renderBar(v){
+  if(v===null)return'<span style="font-size:12px;color:#aaa;">—</span>';
+  const p=pct(v);
+  return`<div class="bar-wrap"><div class="bar-bg" style="background:${barBg(v)};"><div class="bar-fill" style="width:${p}%;background:${barColor(v)};"></div></div><span style="font-size:12px;min-width:32px;text-align:right;color:${barColor(v)};font-weight:600;">${p}%</span></div>`;
+}
+
+function jStr(v){return v===1?"Complete":v===0.5?"In progress":"Not started";}
+
+function detailHtml(rep,s){
+  const j=JUNO[rep.name]||{fl:0,m2m:0};
+  let blocks=[];
+  blocks.push(`<div class="detail-block"><div class="dlabel">Juno Journey</div>Financial Literacy: <strong>${jStr(j.fl)}</strong><br>Moments to Momentum: <strong>${jStr(j.m2m)}</strong></div>`);
+  blocks.push(`<div class="detail-block"><div class="dlabel">Gong (Call Review)</div>Calls listened: <strong>${GONG[rep.name]||0}</strong> / 12 target</div>`);
+  if(rep.role==="Sales Rep"&&s.snRaw){
+    const sn=s.snRaw,zi=s.ziRaw||{logins:0,credits:0,searches:0};
+    blocks.push(`<div class="detail-block"><div class="dlabel">Sales Navigator → ${s.snPct}%</div>Days active: <strong>${sn.days}</strong>/12 &nbsp; Searches: <strong>${sn.searches}</strong>/60<br>Profile views: <strong>${sn.views}</strong>/100 &nbsp; InMails: <strong>${sn.inmails}</strong>/12</div>`);
+    blocks.push(`<div class="detail-block"><div class="dlabel">ZoomInfo → ${s.ziPct}%</div>Logins: <strong>${zi.logins}</strong>/20 &nbsp; Credits: <strong>${zi.credits}</strong>/100<br>Searches: <strong>${zi.searches}</strong>/100</div>`);
+  }
+  if(rep.role==="Manager"&&s.teamAvg!==undefined){
+    blocks.push(`<div class="detail-block"><div class="dlabel">Team</div>Team avg: <strong>${Math.round(s.teamAvg*100)}%</strong> across <strong>${s.directCount}</strong> direct reports</div>`);
+  }
+  if(rep.name==="Staci Eyer"){
+    blocks.push(`<div class="detail-block"><div class="dlabel">Special rule</div>Amelia Cotton Call Review: <strong>${Math.round(getE("Amelia Cotton")*100)}%</strong> (60% weight)<br>Own Call Review: <strong>${Math.round(getE("Staci Eyer")*100)}%</strong> (40% weight)</div>`);
+  }
+  return`<div class="detail-inner">${blocks.join('')}</div>`;
+}
+
+let sortCol='score';
+let sortDir=1;
+const expanded=new Set();
+
+function setSort(col){
+  if(sortCol===col){sortDir*=-1;}else{sortCol=col;sortDir=1;}
+  document.querySelectorAll('th').forEach(th=>th.classList.remove('active-sort'));
+  const th=document.getElementById('th-'+col);
+  if(th)th.classList.add('active-sort');
+  render();
+}
+
+function populateManagers(){
+  const sel=document.getElementById('filter-manager');
+  [...new Set(REPS.map(r=>r.manager))].sort().forEach(m=>{
+    const o=document.createElement('option');o.value=m;o.textContent=m;sel.appendChild(o);
+  });
+}
+
+function render(){
+  const rf=document.getElementById('filter-role').value;
+  const mf=document.getElementById('filter-manager').value;
+  const sf=document.getElementById('filter-status').value;
+
+  let rows=REPS.map(r=>({...r,s:calcScore(r)}));
+  if(rf)rows=rows.filter(r=>r.role===rf);
+  if(mf)rows=rows.filter(r=>r.manager===mf);
+  if(sf==='high')rows=rows.filter(r=>r.s.total>=0.7);
+  if(sf==='mid')rows=rows.filter(r=>r.s.total>=0.4&&r.s.total<0.7);
+  if(sf==='low')rows=rows.filter(r=>r.s.total<0.4);
+
+  const sortFns={
+    score:r=>r.s.total,
+    name:r=>r.name,
+    manager:r=>r.manager,
+    role:r=>r.role,
+    learning:r=>r.s.L,
+    prospecting:r=>r.s.P??-1,
+    callreview:r=>r.s.E,
+    tier:r=>tierOrder(r.s.total),
+  };
+  rows.sort((a,b)=>{
+    const fa=sortFns[sortCol](a),fb=sortFns[sortCol](b);
+    if(fa<fb)return sortDir;
+    if(fa>fb)return -sortDir;
+    return 0;
+  });
+
+  const tot=rows.map(r=>r.s.total);
+  const avg=tot.length?tot.reduce((a,b)=>a+b,0)/tot.length:0;
+  document.getElementById('summary-cards').innerHTML=`
+    <div class="mcard"><div class="mlabel">Avg enablement score</div><div class="mvalue">${Math.round(avg*100)}%</div></div>
+    <div class="mcard"><div class="mlabel">High performers</div><div class="mvalue" style="color:#3b6d11;">${rows.filter(r=>r.s.total>=0.7).length}</div><div class="msub">70% or above</div></div>
+    <div class="mcard"><div class="mlabel">At risk</div><div class="mvalue" style="color:#a32d2d;">${rows.filter(r=>r.s.total<0.4).length}</div><div class="msub">Below 40%</div></div>
+    <div class="mcard"><div class="mlabel">Reps shown</div><div class="mvalue">${rows.length}</div></div>
+  `;
+
+  const sellers=rows.filter(r=>r.role==="Sales Rep");
+  const pipeGap=sellers.filter(r=>r.s.L>=0.6&&r.s.E>=0.6&&r.s.P!==null&&r.s.P<0.4).map(r=>r.name.split(' ')[0]);
+  const skillGap=sellers.filter(r=>r.s.P!==null&&r.s.P>=0.5&&r.s.E<0.35).map(r=>r.name.split(' ')[0]);
+  const disengaged=rows.filter(r=>r.s.total<0.25).map(r=>r.name.split(' ')[0]);
+  const lowLearn=rows.filter(r=>r.s.L<0.4).map(r=>r.name.split(' ')[0]);
+
+  function ic(label,names,color){
+    return`<div class="icard"><div class="ititle" style="color:${color};">${label}</div>${names.length?`<div class="inames">${names.join(', ')}</div>`:'<div class="iempty">None flagged</div>'}</div>`;
+  }
+  document.getElementById('insights').innerHTML=
+    ic('Pipeline gap (learning + call review high, prospecting low)',pipeGap,'#854f0b')+
+    ic('Skill gap (prospecting high, call review low)',skillGap,'#185fa5')+
+    ic('Engagement risk (below 25%)',disengaged,'#a32d2d')+
+    ic('Incomplete learning',lowLearn,'#6b6b67');
+
+  document.getElementById('table-body').innerHTML=rows.map((r,i)=>{
+    const t=tierInfo(r.s.total);
+    const rid='dr-'+i;
+    const isExp=expanded.has(r.name);
+    const prospCell=r.s.P!==null?renderBar(r.s.P):'<span style="font-size:12px;color:#aaa;">—</span>';
+    return`<tr class="data-row">
+      <td><button class="expand-btn" onclick="toggle('${r.name}','${rid}')">${isExp?'▲':'▼'}</button></td>
+      <td style="font-weight:600;">${r.name}</td>
+      <td style="color:#6b6b67;">${r.manager}</td>
+      <td style="color:#6b6b67;font-size:12px;">${r.role}</td>
+      <td>${renderBar(r.s.L)}</td>
+      <td>${prospCell}</td>
+      <td>${renderBar(r.s.E)}</td>
+      <td style="font-weight:700;font-size:14px;">${pct(r.s.total)}%</td>
+      <td><span class="badge ${t.c}">${t.l}</span></td>
+    </tr>
+    <tr id="${rid}" style="display:${isExp?'table-row':'none'};">
+      <td colspan="9" class="detail-row">${detailHtml(r,r.s)}</td>
+    </tr>`;
+  }).join('');
+}
+
+function toggle(name,rid){
+  const el=document.getElementById(rid);
+  if(expanded.has(name)){expanded.delete(name);el.style.display='none';}
+  else{expanded.add(name);el.style.display='table-row';}
+}
+
+populateManagers();
+setSort('score');
+</script>
+</body>
+</html>
