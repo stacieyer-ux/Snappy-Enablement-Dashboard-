@@ -31,7 +31,7 @@
   tr.data-row:hover td { background: #fafaf8; }
   .bar-wrap { display: flex; align-items: center; gap: 7px; }
   .bar-bg { width: 56px; height: 5px; background: #e8e8e4; border-radius: 3px; flex-shrink: 0; }
-  .bar-fill { height: 5px; border-radius: 3px; transition: width 0.3s ease; }
+  .bar-fill { height: 5px; border-radius: 3px; }
   .badge { display: inline-block; font-size: 11px; padding: 2px 9px; border-radius: 20px; font-weight: 600; }
   .badge-high { background: #eaf3de; color: #3b6d11; }
   .badge-mid { background: #faeeda; color: #854f0b; }
@@ -40,15 +40,10 @@
   .expand-btn:hover { background: #f0f0ec; color: #1a1a18; }
   .detail-row td { background: #fafaf8; border-bottom: 1px solid #e5e5e0; }
   .detail-inner { display: flex; flex-wrap: wrap; gap: 12px 24px; padding: 6px 4px; }
-  .detail-inner .detail-block { font-size: 12px; color: #6b6b67; line-height: 1.7; }
-  .detail-inner .detail-block strong { color: #1a1a18; font-weight: 600; }
-  .detail-inner .detail-block .dlabel { font-size: 11px; font-weight: 600; color: #aaa; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 2px; }
+  .detail-block { font-size: 12px; color: #6b6b67; line-height: 1.7; }
+  .detail-block strong { color: #1a1a18; font-weight: 600; }
+  .detail-block .dlabel { font-size: 11px; font-weight: 600; color: #aaa; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 2px; }
   .section-title { font-size: 13px; font-weight: 600; color: #6b6b67; margin: 1.5rem 0 10px; text-transform: uppercase; letter-spacing: 0.04em; }
-  .insight-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; margin-bottom: 1.75rem; }
-  .icard { background: #fff; border: 1px solid #e5e5e0; border-radius: 10px; padding: 14px 16px; }
-  .icard .ititle { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 6px; }
-  .icard .inames { font-size: 12px; color: #1a1a18; line-height: 1.8; }
-  .icard .iempty { font-size: 12px; color: #aaa; font-style: italic; }
   .method-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px; margin-bottom: 1rem; }
   .meth { background: #fff; border: 1px solid #e5e5e0; border-radius: 10px; padding: 16px 18px; }
   .meth h3 { font-size: 13px; font-weight: 600; color: #1a1a18; margin-bottom: 10px; }
@@ -60,11 +55,13 @@
   .footer-note { font-size: 11px; color: #aaa; line-height: 1.8; margin-top: 0.75rem; padding-top: 1rem; border-top: 1px solid #e5e5e0; }
   .snappy-logo { font-size: 13px; font-weight: 700; color: #1a1a18; letter-spacing: -0.02em; }
   .snappy-logo span { color: #d85a30; }
+  .rep-tag { display: inline-block; font-size: 10px; padding: 1px 7px; border-radius: 20px; font-weight: 600; margin-left: 6px; vertical-align: middle; }
+  .rep-tag-leave { background: #e8eaf6; color: #3949ab; }
+  .rep-tag-newhire { background: #e8f5e9; color: #2e7d32; }
 </style>
 </head>
 <body>
 <div class="container">
-
   <div class="top-bar">
     <div>
       <div class="snappy-logo">snappy<span>.</span></div>
@@ -87,10 +84,10 @@
       <option value="">All managers</option>
     </select>
     <select id="filter-status" onchange="render()">
-      <option value="">All scores</option>
-      <option value="high">High (70%+)</option>
-      <option value="mid">Mid (40–69%)</option>
-      <option value="low">Low (under 40%)</option>
+      <option value="">All adopter tiers</option>
+      <option value="high">High Adopter (70%+)</option>
+      <option value="mid">Mid Adopter (40–69%)</option>
+      <option value="low">Low Adopter (under 40%)</option>
     </select>
   </div>
 
@@ -106,15 +103,12 @@
           <th onclick="setSort('prospecting')" id="th-prospecting">Prospecting <span class="sort-icon">↕</span></th>
           <th onclick="setSort('callreview')" id="th-callreview">Call Review <span class="sort-icon">↕</span></th>
           <th onclick="setSort('score')" id="th-score">Score <span class="sort-icon">↕</span></th>
-          <th onclick="setSort('tier')" id="th-tier">Tier <span class="sort-icon">↕</span></th>
+          <th onclick="setSort('tier')" id="th-tier">Adopter Tier <span class="sort-icon">↕</span></th>
         </tr>
       </thead>
       <tbody id="table-body"></tbody>
     </table>
   </div>
-
-  <div class="section-title">Diagnostic insights</div>
-  <div class="insight-grid" id="insights"></div>
 
   <div class="section-title">How scores are calculated</div>
   <div class="method-grid">
@@ -165,7 +159,6 @@
   <div class="footer-note">
     All inputs capped at their target (max contribution = 100%). Data window = last 30 days. Prospecting applies to Sales Reps only. Manager scores roll up recursively from direct reports. ZoomInfo credit benchmark based on 30-day team average. Sales Navigator searches benchmark based on industry best practices.
   </div>
-
 </div>
 
 <script>
@@ -192,11 +185,11 @@ const GONG={
   "Blake Kramer":0,"Bryce Green":1,"Carolina Santrovitsch":3,"Christina Lian Nunez":2,
   "Daniel Max Held":1,"Dillon Brady":2,"Dominique Sorresso":1,"Elana Kathein":20,
   "Elizabeth Speracino":16,"Elliot Levine":4,"Eric Mendelsohn":0,"Gabby Ratte":24,
-  "Gil Schpero":0,"Greg Ehrlich":0,"Isabel Cuevas":59,"Jackie Yin McAfee":2,
+  "Gil Schpero":0,"Greg Ehrlich":10,"Isabel Cuevas":59,"Jackie Yin McAfee":2,
   "Jake Shinder":1,"Jared Center":5,"Jennifer Rodriguez":2,"John Scanlon":1,
-  "Katherine Hooper":0,"Kha Thai Vo":0,"Kyle Dovenbarger":0,"Libby Morningstar":0,
+  "Katherine Hooper":0,"Kha Thai Vo":4,"Kyle Dovenbarger":0,"Libby Morningstar":0,
   "Max Fortin":1,"Megan Buche":3,"Mike Portela":15,"Niki Barry":0,"Nora S. Kosumi":4,
-  "Rebecca Emont":0,"Ross Langley":0,"Ryan Lerner":3,"Scott McKeen":13,"Sean Caulfield":2,
+  "Rebecca Emont":0,"Ross Langley":11,"Ryan Lerner":3,"Scott McKeen":13,"Sean Caulfield":2,
   "Staci Eyer":5,"Stephanie Young":1,"Tal Keshet":2,"Tyler Williams":1,
   "Valentina Arbelaez":3,"Zach Alpert":8,
 };
@@ -205,7 +198,6 @@ const SALESNAV={
   "Allison Little":{days:12,searches:2,views:38,inmails:0},
   "Ashley Phillips":{days:14,searches:7,views:134,inmails:0},
   "Blake Kramer":{days:0,searches:0,views:0,inmails:0},
-  "Bryce Green":{days:0,searches:0,views:0,inmails:0},
   "Daniel Max Held":{days:29,searches:200,views:443,inmails:0},
   "Elliot Levine":{days:29,searches:378,views:1189,inmails:3},
   "Elizabeth Speracino":{days:0,searches:0,views:0,inmails:0},
@@ -265,7 +257,7 @@ const REPS=[
   {name:"Amelia Calin",         manager:"Jared Center",       role:"CSM"},
   {name:"Amelia Cotton",        manager:"Staci Eyer",         role:"IC"},
   {name:"Ashley Phillips",      manager:"Elana Kathein",      role:"Sales Rep"},
-  {name:"Blake Kramer",         manager:"Kyle Dovenbarger",   role:"Sales Rep"},
+  {name:"Blake Kramer",         manager:"Kyle Dovenbarger",   role:"Sales Rep", tag:"Parental Leave"},
   {name:"Bryce Green",          manager:"Jared Center",       role:"CSM"},
   {name:"Carolina Santrovitsch",manager:"Jared Center",       role:"CSM"},
   {name:"Christina Lian Nunez", manager:"Dominique Sorresso", role:"IC"},
@@ -278,7 +270,7 @@ const REPS=[
   {name:"Eric Mendelsohn",      manager:"Kyle Dovenbarger",   role:"Sales Rep"},
   {name:"Gabby Ratte",          manager:"Elana Kathein",      role:"Sales Rep"},
   {name:"Gil Schpero",          manager:"Tal Keshet",         role:"Manager"},
-  {name:"Greg Ehrlich",         manager:"Jake Shinder",       role:"Sales Rep"},
+  {name:"Greg Ehrlich",         manager:"Jake Shinder",       role:"Sales Rep", tag:"New Hire"},
   {name:"Isabel Cuevas",        manager:"Elana Kathein",      role:"Sales Rep"},
   {name:"Jackie Yin McAfee",    manager:"Elana Kathein",      role:"Sales Rep"},
   {name:"Jake Shinder",         manager:"Yoav Rand",          role:"Manager"},
@@ -288,10 +280,10 @@ const REPS=[
   {name:"Katherine Hooper",     manager:"Kyle Dovenbarger",   role:"Sales Rep"},
   {name:"Kha Thai Vo",          manager:"Tal Keshet",         role:"Sales Rep"},
   {name:"Kyle Dovenbarger",     manager:"Dominique Sorresso", role:"Manager"},
-  {name:"Libby Morningstar",    manager:"Elana Kathein",      role:"Sales Rep"},
+  {name:"Libby Morningstar",    manager:"Elana Kathein",      role:"Sales Rep", tag:"Parental Leave"},
   {name:"Max Fortin",           manager:"Gil Schpero",        role:"Sales Rep"},
   {name:"Megan Buche",          manager:"Jared Center",       role:"CSM"},
-  {name:"Mike Portela",         manager:"Allison Little",     role:"CSM"},
+  {name:"Mike Portela",         manager:"Allison Little",     role:"CSM", tag:"New Hire"},
   {name:"Niki Barry",           manager:"Kyle Dovenbarger",   role:"Sales Rep"},
   {name:"Nora S. Kosumi",       manager:"Gil Schpero",        role:"Sales Rep"},
   {name:"Rebecca Emont",        manager:"Jared Center",       role:"CSM"},
@@ -304,7 +296,7 @@ const REPS=[
   {name:"Tal Keshet",           manager:"Hani Goldstein",     role:"Manager"},
   {name:"Tyler Williams",       manager:"Jared Center",       role:"CSM"},
   {name:"Valentina Arbelaez",   manager:"Gil Schpero",        role:"Sales Rep"},
-  {name:"Zach Alpert",          manager:"Allison Little",     role:"CSM"},
+  {name:"Zach Alpert",          manager:"Allison Little",     role:"CSM", tag:"New Hire"},
 ];
 
 function cap(v,mx){return Math.min(v/mx,1);}
@@ -345,7 +337,11 @@ function calcScore(rep){
 REPS.forEach(r=>calcScore(r));
 
 function pct(v){return v===null?null:Math.round(v*100);}
-function tierInfo(v){if(v>=0.7)return{l:"High",c:"badge-high"};if(v>=0.4)return{l:"Mid",c:"badge-mid"};return{l:"Low",c:"badge-low"};}
+function tierInfo(v){
+  if(v>=0.7)return{l:"High Adopter",c:"badge-high"};
+  if(v>=0.4)return{l:"Mid Adopter",c:"badge-mid"};
+  return{l:"Low Adopter",c:"badge-low"};
+}
 function tierOrder(v){if(v>=0.7)return 0;if(v>=0.4)return 1;return 2;}
 function barColor(v){if(v>=0.7)return"#3b6d11";if(v>=0.4)return"#854f0b";return"#a32d2d";}
 function barBg(v){if(v>=0.7)return"#eaf3de";if(v>=0.4)return"#faeeda";return"#fcebeb";}
@@ -408,46 +404,26 @@ function render(){
   if(sf==='mid')rows=rows.filter(r=>r.s.total>=0.4&&r.s.total<0.7);
   if(sf==='low')rows=rows.filter(r=>r.s.total<0.4);
 
+  const tot=rows.map(r=>r.s.total);
+  const avg=tot.length?tot.reduce((a,b)=>a+b,0)/tot.length:0;
+
+  document.getElementById('summary-cards').innerHTML=`
+    <div class="mcard"><div class="mlabel">Avg enablement score</div><div class="mvalue">${Math.round(avg*100)}%</div></div>
+    <div class="mcard"><div class="mlabel">High Adopters</div><div class="mvalue" style="color:#3b6d11;">${rows.filter(r=>r.s.total>=0.7).length}</div><div class="msub">70% or above</div></div>
+    <div class="mcard"><div class="mlabel">Mid Adopters</div><div class="mvalue" style="color:#854f0b;">${rows.filter(r=>r.s.total>=0.4&&r.s.total<0.7).length}</div><div class="msub">40–69%</div></div>
+    <div class="mcard"><div class="mlabel">Low Adopters</div><div class="mvalue" style="color:#a32d2d;">${rows.filter(r=>r.s.total<0.4).length}</div><div class="msub">Below 40%</div></div>
+    <div class="mcard"><div class="mlabel">Total reps</div><div class="mvalue">${rows.length}</div></div>
+  `;
+
   const sortFns={
-    score:r=>r.s.total,
-    name:r=>r.name,
-    manager:r=>r.manager,
-    role:r=>r.role,
-    learning:r=>r.s.L,
-    prospecting:r=>r.s.P??-1,
-    callreview:r=>r.s.E,
+    score:r=>r.s.total,name:r=>r.name,manager:r=>r.manager,role:r=>r.role,
+    learning:r=>r.s.L,prospecting:r=>r.s.P??-1,callreview:r=>r.s.E,
     tier:r=>tierOrder(r.s.total),
   };
   rows.sort((a,b)=>{
     const fa=sortFns[sortCol](a),fb=sortFns[sortCol](b);
-    if(fa<fb)return sortDir;
-    if(fa>fb)return -sortDir;
-    return 0;
+    if(fa<fb)return sortDir;if(fa>fb)return -sortDir;return 0;
   });
-
-  const tot=rows.map(r=>r.s.total);
-  const avg=tot.length?tot.reduce((a,b)=>a+b,0)/tot.length:0;
-  document.getElementById('summary-cards').innerHTML=`
-    <div class="mcard"><div class="mlabel">Avg enablement score</div><div class="mvalue">${Math.round(avg*100)}%</div></div>
-    <div class="mcard"><div class="mlabel">High performers</div><div class="mvalue" style="color:#3b6d11;">${rows.filter(r=>r.s.total>=0.7).length}</div><div class="msub">70% or above</div></div>
-    <div class="mcard"><div class="mlabel">At risk</div><div class="mvalue" style="color:#a32d2d;">${rows.filter(r=>r.s.total<0.4).length}</div><div class="msub">Below 40%</div></div>
-    <div class="mcard"><div class="mlabel">Reps shown</div><div class="mvalue">${rows.length}</div></div>
-  `;
-
-  const sellers=rows.filter(r=>r.role==="Sales Rep");
-  const pipeGap=sellers.filter(r=>r.s.L>=0.6&&r.s.E>=0.6&&r.s.P!==null&&r.s.P<0.4).map(r=>r.name.split(' ')[0]);
-  const skillGap=sellers.filter(r=>r.s.P!==null&&r.s.P>=0.5&&r.s.E<0.35).map(r=>r.name.split(' ')[0]);
-  const disengaged=rows.filter(r=>r.s.total<0.25).map(r=>r.name.split(' ')[0]);
-  const lowLearn=rows.filter(r=>r.s.L<0.4).map(r=>r.name.split(' ')[0]);
-
-  function ic(label,names,color){
-    return`<div class="icard"><div class="ititle" style="color:${color};">${label}</div>${names.length?`<div class="inames">${names.join(', ')}</div>`:'<div class="iempty">None flagged</div>'}</div>`;
-  }
-  document.getElementById('insights').innerHTML=
-    ic('Pipeline gap (learning + call review high, prospecting low)',pipeGap,'#854f0b')+
-    ic('Skill gap (prospecting high, call review low)',skillGap,'#185fa5')+
-    ic('Engagement risk (below 25%)',disengaged,'#a32d2d')+
-    ic('Incomplete learning',lowLearn,'#6b6b67');
 
   document.getElementById('table-body').innerHTML=rows.map((r,i)=>{
     const t=tierInfo(r.s.total);
@@ -456,7 +432,7 @@ function render(){
     const prospCell=r.s.P!==null?renderBar(r.s.P):'<span style="font-size:12px;color:#aaa;">—</span>';
     return`<tr class="data-row">
       <td><button class="expand-btn" onclick="toggle('${r.name}','${rid}')">${isExp?'▲':'▼'}</button></td>
-      <td style="font-weight:600;">${r.name}</td>
+      <td style="font-weight:600;">${r.name}${r.tag?`<span class="rep-tag ${r.tag==='Parental Leave'?'rep-tag-leave':'rep-tag-newhire'}">${r.tag}</span>`:''}</td>
       <td style="color:#6b6b67;">${r.manager}</td>
       <td style="color:#6b6b67;font-size:12px;">${r.role}</td>
       <td>${renderBar(r.s.L)}</td>
