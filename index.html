@@ -4,164 +4,223 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Snappy Enablement Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f5f5f3; color: #1a1a18; min-height: 100vh; padding: 2rem 1.5rem; }
-  .container { max-width: 1100px; margin: 0 auto; }
-  .top-bar { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 1.75rem; flex-wrap: wrap; gap: 12px; }
-  .top-bar h1 { font-size: 20px; font-weight: 600; color: #1a1a18; }
-  .top-bar .sub { font-size: 13px; color: #6b6b67; margin-top: 3px; }
-  .metric-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 1.5rem; }
-  .mcard { background: #fff; border: 1px solid #e5e5e0; border-radius: 10px; padding: 16px 18px; }
-  .mcard .mlabel { font-size: 12px; color: #6b6b67; margin-bottom: 6px; }
-  .mcard .mvalue { font-size: 24px; font-weight: 600; color: #1a1a18; }
-  .mcard .msub { font-size: 12px; color: #6b6b67; margin-top: 2px; }
-  .filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 1.25rem; }
-  .filters select { font-size: 13px; padding: 7px 12px; border-radius: 8px; border: 1px solid #d5d5d0; background: #fff; color: #1a1a18; cursor: pointer; }
-  .filters select:hover { border-color: #aaa; }
-  .table-wrap { background: #fff; border: 1px solid #e5e5e0; border-radius: 12px; overflow: hidden; margin-bottom: 1.5rem; overflow-x: auto; }
-  table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 750px; }
-  th { text-align: left; font-weight: 600; font-size: 12px; color: #6b6b67; padding: 10px 12px; border-bottom: 1px solid #e5e5e0; white-space: nowrap; cursor: pointer; user-select: none; background: #fafaf8; }
-  th:hover { color: #1a1a18; background: #f0f0ec; }
-  th .sort-icon { margin-left: 4px; font-size: 10px; opacity: 0.5; }
-  th.active-sort { color: #1a1a18; }
-  th.active-sort .sort-icon { opacity: 1; }
-  td { padding: 10px 12px; border-bottom: 1px solid #f0f0ec; color: #1a1a18; white-space: nowrap; vertical-align: middle; }
-  tr:last-child td { border-bottom: none; }
-  tr.data-row:hover td { background: #fafaf8; }
-  .bar-wrap { display: flex; align-items: center; gap: 7px; }
-  .bar-bg { width: 56px; height: 5px; background: #e8e8e4; border-radius: 3px; flex-shrink: 0; }
-  .bar-fill { height: 5px; border-radius: 3px; }
-  .badge { display: inline-block; font-size: 11px; padding: 2px 9px; border-radius: 20px; font-weight: 600; }
-  .badge-high { background: #eaf3de; color: #3b6d11; }
-  .badge-mid { background: #faeeda; color: #854f0b; }
-  .badge-low { background: #fcebeb; color: #a32d2d; }
-  .expand-btn { font-size: 11px; color: #aaa; background: none; border: none; cursor: pointer; padding: 2px 4px; border-radius: 4px; }
-  .expand-btn:hover { background: #f0f0ec; color: #1a1a18; }
-  .detail-row td { background: #fafaf8; border-bottom: 1px solid #e5e5e0; }
-  .detail-inner { display: flex; flex-wrap: wrap; gap: 12px 24px; padding: 6px 4px; }
-  .detail-block { font-size: 12px; color: #6b6b67; line-height: 1.7; }
-  .detail-block strong { color: #1a1a18; font-weight: 600; }
-  .detail-block .dlabel { font-size: 11px; font-weight: 600; color: #aaa; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 2px; }
-  .section-title { font-size: 13px; font-weight: 600; color: #6b6b67; margin: 1.5rem 0 10px; text-transform: uppercase; letter-spacing: 0.04em; }
-  .method-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px; margin-bottom: 1rem; }
-  .meth { background: #fff; border: 1px solid #e5e5e0; border-radius: 10px; padding: 16px 18px; }
-  .meth h3 { font-size: 13px; font-weight: 600; color: #1a1a18; margin-bottom: 10px; }
-  .meth ul { list-style: none; }
-  .meth li { font-size: 12px; color: #6b6b67; padding: 4px 0; border-bottom: 1px solid #f0f0ec; line-height: 1.5; }
-  .meth li:last-child { border-bottom: none; }
-  .meth li strong { color: #1a1a18; font-weight: 600; }
-  .meth li em { color: #aaa; font-style: italic; font-size: 11px; }
-  .footer-note { font-size: 11px; color: #aaa; line-height: 1.8; margin-top: 0.75rem; padding-top: 1rem; border-top: 1px solid #e5e5e0; }
-  .snappy-logo { font-size: 13px; font-weight: 700; color: #1a1a18; letter-spacing: -0.02em; }
-  .snappy-logo span { color: #d85a30; }
-  .rep-tag { display: inline-block; font-size: 10px; padding: 1px 7px; border-radius: 20px; font-weight: 600; margin-left: 6px; vertical-align: middle; }
-  .rep-tag-leave { background: #e8eaf6; color: #3949ab; }
-  .rep-tag-newhire { background: #e8f5e9; color: #2e7d32; }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Inter', sans-serif; background: #012754; color: #fff; min-height: 100vh; padding: 2rem 1.5rem; }
+.container { max-width: 1140px; margin: 0 auto; }
+
+/* Header */
+.top-bar { margin-bottom: 2rem; }
+.snappy-logo { font-size: 13px; font-weight: 800; letter-spacing: -0.02em; color: #fff; }
+.snappy-logo span { color: #36D4FF; }
+.top-bar h1 { font-size: 22px; font-weight: 800; color: #fff; margin-top: 8px; }
+.top-bar .sub { font-size: 13px; color: #6CA6FF; margin-top: 4px; }
+.section-title { font-size: 11px; font-weight: 700; color: #6CA6FF; text-transform: uppercase; letter-spacing: 0.1em; margin: 2rem 0 12px; }
+
+/* Summary cards */
+.metric-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 2rem; }
+.mcard { background: rgba(108,166,255,0.08); border: 1px solid rgba(108,166,255,0.2); border-radius: 12px; padding: 16px 18px; }
+.mcard .mlabel { font-size: 11px; color: #6CA6FF; margin-bottom: 6px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
+.mcard .mvalue { font-size: 26px; font-weight: 800; color: #fff; }
+.mcard .msub { font-size: 11px; color: rgba(255,255,255,0.4); margin-top: 3px; }
+
+/* Tool cards */
+.tool-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; margin-bottom: 2rem; }
+.tool-card { background: rgba(255,255,255,0.04); border: 1px solid rgba(108,166,255,0.25); border-radius: 16px; padding: 22px 24px; }
+.tool-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; }
+.tool-header h3 { font-size: 16px; font-weight: 800; color: #fff; }
+.tool-cost { font-size: 11px; color: #6CA6FF; background: rgba(108,166,255,0.12); border: 1px solid rgba(108,166,255,0.3); padding: 3px 10px; border-radius: 20px; font-weight: 600; }
+.tool-scope { font-size: 11px; color: rgba(255,255,255,0.4); margin-bottom: 16px; }
+.gauge-wrap { display: flex; justify-content: center; margin-bottom: 8px; }
+
+/* Two-tier stats */
+.tier-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 12px 0; }
+.tier-box { border-radius: 10px; padding: 12px 14px; text-align: center; }
+.tier-box.on-target { background: rgba(54,212,255,0.08); border: 1px solid rgba(54,212,255,0.25); }
+.tier-box.any-activity { background: rgba(108,166,255,0.06); border: 1px solid rgba(108,166,255,0.15); }
+.tier-box .tv { font-size: 24px; font-weight: 800; }
+.tier-box.on-target .tv { color: #36D4FF; }
+.tier-box.any-activity .tv { color: #6CA6FF; }
+.tier-box .tl { font-size: 10px; color: rgba(255,255,255,0.5); margin-top: 3px; line-height: 1.4; font-weight: 500; text-transform: uppercase; letter-spacing: 0.04em; }
+.tier-box .td { font-size: 10px; color: rgba(255,255,255,0.3); margin-top: 4px; line-height: 1.4; }
+
+/* Bench tags */
+.bench-row { display: flex; gap: 6px; margin: 10px 0; flex-wrap: wrap; }
+.bench-tag { font-size: 10px; font-weight: 700; padding: 3px 9px; border-radius: 20px; }
+.bench-low { background: rgba(255,10,0,0.15); color: #ff6b6b; border: 1px solid rgba(255,10,0,0.2); }
+.bench-mid { background: rgba(248,220,128,0.15); color: #F8DC80; border: 1px solid rgba(248,220,128,0.2); }
+.bench-high { background: rgba(56,118,29,0.2); color: #7dd463; border: 1px solid rgba(56,118,29,0.3); }
+.bench-current-high { background: rgba(54,212,255,0.15); color: #36D4FF; border: 1px solid rgba(54,212,255,0.3); }
+.bench-current-mid { background: rgba(248,220,128,0.15); color: #F8DC80; border: 1px solid rgba(248,220,128,0.2); }
+.bench-current-low { background: rgba(255,10,0,0.15); color: #ff6b6b; border: 1px solid rgba(255,10,0,0.2); }
+
+/* Expectations */
+.def-box { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 10px; padding: 12px 14px; margin: 10px 0; }
+.def-title { font-size: 10px; font-weight: 700; color: #6CA6FF; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 8px; }
+.def-row { font-size: 11px; color: rgba(255,255,255,0.55); line-height: 1.8; }
+.def-row strong { color: rgba(255,255,255,0.85); font-weight: 600; }
+
+/* Inactive list */
+.inactive-box { background: rgba(255,10,0,0.08); border: 1px solid rgba(255,10,0,0.2); border-radius: 10px; padding: 10px 14px; margin-top: 10px; }
+.inactive-title { font-size: 10px; font-weight: 700; color: #ff6b6b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
+.inactive-names { font-size: 11px; color: rgba(255,107,107,0.8); line-height: 1.9; }
+
+/* Divider */
+.tool-divider { border: none; border-top: 1px solid rgba(108,166,255,0.1); margin: 10px 0; }
+
+/* Table */
+.filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 1.25rem; }
+.filters select { font-size: 12px; padding: 7px 12px; border-radius: 8px; border: 1px solid rgba(108,166,255,0.3); background: rgba(108,166,255,0.08); color: #fff; cursor: pointer; }
+.filters select option { background: #012754; color: #fff; }
+.table-wrap { background: rgba(255,255,255,0.03); border: 1px solid rgba(108,166,255,0.2); border-radius: 14px; overflow: hidden; margin-bottom: 1.5rem; overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 750px; }
+th { text-align: left; font-weight: 700; font-size: 10px; color: #6CA6FF; padding: 12px 14px; border-bottom: 1px solid rgba(108,166,255,0.15); white-space: nowrap; cursor: pointer; user-select: none; background: rgba(108,166,255,0.05); text-transform: uppercase; letter-spacing: 0.06em; }
+th:hover { color: #fff; }
+th .si { margin-left: 4px; font-size: 9px; opacity: 0.5; }
+th.active-sort { color: #36D4FF; }
+th.active-sort .si { opacity: 1; }
+td { padding: 10px 14px; border-bottom: 1px solid rgba(108,166,255,0.08); color: rgba(255,255,255,0.85); white-space: nowrap; vertical-align: middle; }
+tr:last-child td { border-bottom: none; }
+tr.data-row:hover td { background: rgba(108,166,255,0.05); }
+.bar-wrap { display: flex; align-items: center; gap: 7px; }
+.bar-bg { width: 52px; height: 4px; border-radius: 2px; flex-shrink: 0; background: rgba(255,255,255,0.08); }
+.bar-fill { height: 4px; border-radius: 2px; }
+.badge { display: inline-block; font-size: 10px; padding: 2px 9px; border-radius: 20px; font-weight: 700; }
+.badge-high { background: rgba(56,118,29,0.25); color: #7dd463; border: 1px solid rgba(56,118,29,0.3); }
+.badge-mid { background: rgba(248,220,128,0.15); color: #F8DC80; border: 1px solid rgba(248,220,128,0.2); }
+.badge-low { background: rgba(255,10,0,0.15); color: #ff6b6b; border: 1px solid rgba(255,10,0,0.2); }
+.expand-btn { font-size: 11px; color: rgba(108,166,255,0.5); background: none; border: none; cursor: pointer; padding: 2px 4px; border-radius: 4px; }
+.expand-btn:hover { color: #6CA6FF; }
+.detail-td { background: rgba(108,166,255,0.04) !important; border-bottom: 1px solid rgba(108,166,255,0.1) !important; }
+.detail-inner { display: flex; flex-wrap: wrap; gap: 12px 28px; padding: 8px 4px; }
+.detail-block { font-size: 11px; color: rgba(255,255,255,0.45); line-height: 1.8; }
+.detail-block strong { color: rgba(255,255,255,0.85); font-weight: 600; }
+.dlabel { font-size: 10px; font-weight: 700; color: #6CA6FF; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 3px; }
+.rep-tag { display: inline-block; font-size: 10px; padding: 1px 7px; border-radius: 20px; font-weight: 600; margin-left: 6px; vertical-align: middle; }
+.rep-tag-leave { background: rgba(184,158,254,0.15); color: #B89FE7; border: 1px solid rgba(184,158,254,0.25); }
+.rep-tag-newhire { background: rgba(128,180,162,0.15); color: #80B4A2; border: 1px solid rgba(128,180,162,0.25); }
+
+/* Methodology */
+.method-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin-bottom: 1rem; }
+.meth { background: rgba(255,255,255,0.03); border: 1px solid rgba(108,166,255,0.15); border-radius: 12px; padding: 16px 18px; }
+.meth h3 { font-size: 13px; font-weight: 700; color: #6CA6FF; margin-bottom: 10px; }
+.meth ul { list-style: none; }
+.meth li { font-size: 11px; color: rgba(255,255,255,0.5); padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.05); line-height: 1.5; }
+.meth li:last-child { border-bottom: none; }
+.meth li strong { color: rgba(255,255,255,0.85); font-weight: 600; }
+.meth li em { color: rgba(255,255,255,0.3); font-style: italic; font-size: 10px; }
+.footer-note { font-size: 11px; color: rgba(255,255,255,0.3); line-height: 1.8; margin-top: 0.75rem; padding-top: 1rem; border-top: 1px solid rgba(108,166,255,0.1); }
 </style>
 </head>
 <body>
 <div class="container">
-  <div class="top-bar">
-    <div>
-      <div class="snappy-logo">snappy<span>.</span></div>
-      <h1 style="margin-top:6px;">Enablement Dashboard</h1>
-      <div class="sub">Apr 4 – May 4, 2026 &nbsp;·&nbsp; All scores normalized 0–100%</div>
-    </div>
+
+<div class="top-bar">
+  <div class="snappy-logo">snappy<span>.</span></div>
+  <h1>Enablement Dashboard</h1>
+  <div class="sub">Apr 4 – May 4, 2026 &nbsp;·&nbsp; All scores normalized 0–100%</div>
+</div>
+
+<div class="section-title">Enablement Score Summary</div>
+<div class="metric-row" id="summary-cards"></div>
+
+<div class="section-title">Tool Adoption &amp; ROI Overview</div>
+<div class="tool-grid" id="tool-cards"></div>
+
+<div class="section-title">Rep Enablement Scores</div>
+<div class="filters">
+  <select id="filter-role" onchange="render()">
+    <option value="">All roles</option>
+    <option value="Sales Rep">Sales Rep</option>
+    <option value="CSM">CSM</option>
+    <option value="Manager">Manager</option>
+    <option value="IC">IC</option>
+  </select>
+  <select id="filter-manager" onchange="render()">
+    <option value="">All managers</option>
+  </select>
+  <select id="filter-status" onchange="render()">
+    <option value="">All adopter tiers</option>
+    <option value="high">High Adopter (70%+)</option>
+    <option value="mid">Mid Adopter (40–69%)</option>
+    <option value="low">Low Adopter (under 40%)</option>
+  </select>
+</div>
+
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th style="width:32px;"></th>
+        <th onclick="setSort('name')" id="th-name">Rep <span class="si">↕</span></th>
+        <th onclick="setSort('manager')" id="th-manager">Manager <span class="si">↕</span></th>
+        <th onclick="setSort('role')" id="th-role">Role <span class="si">↕</span></th>
+        <th onclick="setSort('learning')" id="th-learning">Learning <span class="si">↕</span></th>
+        <th onclick="setSort('prospecting')" id="th-prospecting">Prospecting <span class="si">↕</span></th>
+        <th onclick="setSort('callreview')" id="th-callreview">Call Review <span class="si">↕</span></th>
+        <th onclick="setSort('score')" id="th-score">Score <span class="si">↕</span></th>
+        <th onclick="setSort('tier')" id="th-tier">Adopter Tier <span class="si">↕</span></th>
+      </tr>
+    </thead>
+    <tbody id="table-body"></tbody>
+  </table>
+</div>
+
+<div class="section-title">How Enablement Scores Are Calculated</div>
+<div class="method-grid">
+  <div class="meth">
+    <h3>Learning (Juno Journey)</h3>
+    <ul>
+      <li><strong>Financial Literacy</strong> — Not started = 0, In progress = 50%, Complete = 100%</li>
+      <li><strong>Moments to Momentum</strong> — Not started = 0, In progress = 50%, Complete = 100%</li>
+      <li><strong>Score</strong> = average of both courses</li>
+    </ul>
   </div>
-
-  <div class="metric-row" id="summary-cards"></div>
-
-  <div class="filters">
-    <select id="filter-role" onchange="render()">
-      <option value="">All roles</option>
-      <option value="Sales Rep">Sales Rep</option>
-      <option value="CSM">CSM</option>
-      <option value="Manager">Manager</option>
-      <option value="IC">IC</option>
-    </select>
-    <select id="filter-manager" onchange="render()">
-      <option value="">All managers</option>
-    </select>
-    <select id="filter-status" onchange="render()">
-      <option value="">All adopter tiers</option>
-      <option value="high">High Adopter (70%+)</option>
-      <option value="mid">Mid Adopter (40–69%)</option>
-      <option value="low">Low Adopter (under 40%)</option>
-    </select>
+  <div class="meth">
+    <h3>Prospecting (Sales Reps only)</h3>
+    <ul>
+      <li><strong>Sales Navigator</strong> — avg of 4 inputs:</li>
+      <li>Days active — target 12/mo</li>
+      <li>Searches — target 60/mo</li>
+      <li>Profile views — target 100/mo</li>
+      <li>InMails sent — target 12/mo</li>
+      <li><strong>ZoomInfo</strong> — avg of 3 inputs:</li>
+      <li>Logins — target 20/mo</li>
+      <li>Credits used — target 100/mo <em>(team avg)</em></li>
+      <li>Searches — target 100/mo</li>
+      <li><strong>Score</strong> = avg(Sales Nav, ZoomInfo)</li>
+    </ul>
   </div>
-
-  <div class="table-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th style="width:32px;"></th>
-          <th onclick="setSort('name')" id="th-name">Rep <span class="sort-icon">↕</span></th>
-          <th onclick="setSort('manager')" id="th-manager">Manager <span class="sort-icon">↕</span></th>
-          <th onclick="setSort('role')" id="th-role">Role <span class="sort-icon">↕</span></th>
-          <th onclick="setSort('learning')" id="th-learning">Learning <span class="sort-icon">↕</span></th>
-          <th onclick="setSort('prospecting')" id="th-prospecting">Prospecting <span class="sort-icon">↕</span></th>
-          <th onclick="setSort('callreview')" id="th-callreview">Call Review <span class="sort-icon">↕</span></th>
-          <th onclick="setSort('score')" id="th-score">Score <span class="sort-icon">↕</span></th>
-          <th onclick="setSort('tier')" id="th-tier">Adopter Tier <span class="sort-icon">↕</span></th>
-        </tr>
-      </thead>
-      <tbody id="table-body"></tbody>
-    </table>
+  <div class="meth">
+    <h3>Call Review (Gong)</h3>
+    <ul>
+      <li><strong>Calls listened</strong> — target 12/mo (3/week)</li>
+      <li>Activity window: last 30 days</li>
+      <li><strong>Score</strong> = calls / 12, capped at 100%</li>
+    </ul>
   </div>
-
-  <div class="section-title">How scores are calculated</div>
-  <div class="method-grid">
-    <div class="meth">
-      <h3>Learning (Juno Journey)</h3>
-      <ul>
-        <li><strong>Financial Literacy</strong> — Not started = 0, In progress = 50%, Complete = 100%</li>
-        <li><strong>Moments to Momentum (M2M)</strong> — Not started = 0, In progress = 50%, Complete = 100%</li>
-        <li><strong>Score</strong> = average of both courses</li>
-      </ul>
-    </div>
-    <div class="meth">
-      <h3>Prospecting (Sales Reps only)</h3>
-      <ul>
-        <li><strong>Sales Navigator</strong> — average of 4 inputs:</li>
-        <li>Days active — target 12/mo</li>
-        <li>Searches performed — target 60/mo</li>
-        <li>Profile views — target 100/mo</li>
-        <li>InMails sent — target 12/mo</li>
-        <li><strong>ZoomInfo</strong> — average of 3 inputs:</li>
-        <li>Logins — target 20/mo</li>
-        <li>Credits used — target 100/mo <em>(based on team avg)</em></li>
-        <li>Searches — target 100/mo</li>
-        <li><strong>Score</strong> = avg(Sales Nav score, ZoomInfo score)</li>
-      </ul>
-    </div>
-    <div class="meth">
-      <h3>Call Review (Gong)</h3>
-      <ul>
-        <li><strong>Calls listened</strong> — target 12/mo (3 per week)</li>
-        <li>Activity window: last 30 days</li>
-        <li><strong>Score</strong> = calls listened / 12, capped at 100%</li>
-      </ul>
-    </div>
-    <div class="meth">
-      <h3>Role weights</h3>
-      <ul>
-        <li><strong>Sales Rep</strong> — 30% Learning, 35% Prospecting, 35% Call Review</li>
-        <li><strong>CSM</strong> — 60% Learning, 40% Call Review</li>
-        <li><strong>Manager</strong> — 60% Team avg, 25% Call Review, 15% Learning</li>
-        <li><strong>Amelia Cotton</strong> — 100% Call Review</li>
-        <li><strong>Christina Lian Nunez</strong> — 50% Learning, 50% Call Review</li>
-        <li><strong>Staci Eyer</strong> — 60% Amelia's Call Review, 40% own Call Review</li>
-      </ul>
-    </div>
-  </div>
-
-  <div class="footer-note">
-    All inputs capped at their target (max contribution = 100%). Data window = last 30 days. Prospecting applies to Sales Reps only. Manager scores roll up recursively from direct reports. ZoomInfo credit benchmark based on 30-day team average. Sales Navigator searches benchmark based on industry best practices.
+  <div class="meth">
+    <h3>Role Weights</h3>
+    <ul>
+      <li><strong>Sales Rep</strong> — 30% Learning, 35% Prospecting, 35% Call Review</li>
+      <li><strong>CSM</strong> — 60% Learning, 40% Call Review</li>
+      <li><strong>Manager</strong> — 60% Team avg, 25% Call Review, 15% Learning</li>
+      <li><strong>Amelia Cotton</strong> — 100% Call Review</li>
+      <li><strong>Christina Lian Nunez</strong> — 50% Learning, 50% Call Review</li>
+      <li><strong>Staci Eyer</strong> — 60% Amelia's Call Review, 40% own</li>
+    </ul>
   </div>
 </div>
 
+<div class="footer-note">
+  All inputs capped at their target (max = 100%). Data window = last 30 days. Prospecting applies to Sales Reps only. Manager scores roll up recursively. Tool adoption excludes users on parental leave (Blake Kramer, Libby Morningstar) and new hires not yet fully onboarded (Greg Ehrlich). Best-in-class benchmarks based on B2B SaaS industry research.
+</div>
+
+</div>
+
 <script>
+// ── DATA ─────────────────────────────────────────────────────────────────────
 const JUNO={
   "Allison Little":{fl:1,m2m:1},"Amelia Calin":{fl:1,m2m:1},"Amelia Cotton":{fl:1,m2m:1},
   "Ashley Phillips":{fl:1,m2m:1},"Blake Kramer":{fl:1,m2m:0},"Bryce Green":{fl:1,m2m:0.5},
@@ -179,7 +238,6 @@ const JUNO={
   "Staci Eyer":{fl:1,m2m:1},"Stephanie Young":{fl:1,m2m:1},"Tal Keshet":{fl:1,m2m:0.5},
   "Tyler Williams":{fl:1,m2m:1},"Valentina Arbelaez":{fl:1,m2m:0.5},"Zach Alpert":{fl:0,m2m:0},
 };
-
 const GONG={
   "Allison Little":8,"Amelia Calin":0,"Amelia Cotton":30,"Ashley Phillips":0,
   "Blake Kramer":0,"Bryce Green":1,"Carolina Santrovitsch":3,"Christina Lian Nunez":2,
@@ -193,24 +251,19 @@ const GONG={
   "Staci Eyer":5,"Stephanie Young":1,"Tal Keshet":2,"Tyler Williams":1,
   "Valentina Arbelaez":3,"Zach Alpert":8,
 };
-
 const SALESNAV={
-  "Allison Little":{days:12,searches:2,views:38,inmails:0},
   "Ashley Phillips":{days:14,searches:7,views:134,inmails:0},
-  "Blake Kramer":{days:0,searches:0,views:0,inmails:0},
   "Daniel Max Held":{days:29,searches:200,views:443,inmails:0},
   "Elliot Levine":{days:29,searches:378,views:1189,inmails:3},
   "Elizabeth Speracino":{days:0,searches:0,views:0,inmails:0},
   "Eric Mendelsohn":{days:30,searches:117,views:289,inmails:99},
   "Gabby Ratte":{days:15,searches:0,views:21,inmails:0},
-  "Greg Ehrlich":{days:0,searches:0,views:0,inmails:0},
   "Isabel Cuevas":{days:0,searches:0,views:0,inmails:0},
   "Jackie Yin McAfee":{days:26,searches:22,views:13,inmails:0},
   "Jennifer Rodriguez":{days:0,searches:0,views:0,inmails:0},
   "John Scanlon":{days:13,searches:30,views:404,inmails:0},
   "Katherine Hooper":{days:22,searches:34,views:168,inmails:27},
   "Kha Thai Vo":{days:0,searches:0,views:0,inmails:0},
-  "Libby Morningstar":{days:25,searches:0,views:3,inmails:0},
   "Max Fortin":{days:29,searches:137,views:120,inmails:0},
   "Megan Buche":{days:0,searches:0,views:0,inmails:0},
   "Niki Barry":{days:11,searches:30,views:48,inmails:0},
@@ -222,36 +275,38 @@ const SALESNAV={
   "Tyler Williams":{days:22,searches:2,views:5,inmails:0},
   "Valentina Arbelaez":{days:7,searches:0,views:11,inmails:0},
   "Amelia Cotton":{days:18,searches:11,views:31,inmails:0},
+  "Blake Kramer":{days:0,searches:0,views:0,inmails:0},
+  "Greg Ehrlich":{days:0,searches:0,views:0,inmails:0},
+  "Libby Morningstar":{days:0,searches:0,views:0,inmails:0},
 };
-
 const ZOOMINFO={
   "Ashley Phillips":{logins:6,credits:0,searches:8},
-  "Blake Kramer":{logins:0,credits:0,searches:0},
   "Daniel Max Held":{logins:9,credits:0,searches:0},
   "Elliot Levine":{logins:27,credits:81,searches:101},
   "Elizabeth Speracino":{logins:3,credits:0,searches:0},
   "Eric Mendelsohn":{logins:11,credits:0,searches:13},
   "Gabby Ratte":{logins:6,credits:0,searches:4},
-  "Greg Ehrlich":{logins:0,credits:0,searches:0},
   "Isabel Cuevas":{logins:61,credits:190,searches:279},
   "Jackie Yin McAfee":{logins:20,credits:427,searches:188},
   "Jennifer Rodriguez":{logins:37,credits:193,searches:34},
   "John Scanlon":{logins:6,credits:4,searches:0},
   "Katherine Hooper":{logins:5,credits:35,searches:18},
   "Kha Thai Vo":{logins:0,credits:0,searches:0},
-  "Libby Morningstar":{logins:0,credits:0,searches:0},
   "Max Fortin":{logins:0,credits:0,searches:0},
+  "Megan Buche":{logins:0,credits:0,searches:0},
   "Niki Barry":{logins:4,credits:0,searches:1},
   "Nora S. Kosumi":{logins:0,credits:0,searches:0},
+  "Rebecca Emont":{logins:0,credits:0,searches:0},
   "Ross Langley":{logins:0,credits:0,searches:0},
   "Ryan Lerner":{logins:3,credits:0,searches:1},
   "Scott McKeen":{logins:0,credits:0,searches:0},
   "Valentina Arbelaez":{logins:0,credits:0,searches:0},
+  "Blake Kramer":{logins:0,credits:0,searches:0},
+  "Greg Ehrlich":{logins:0,credits:0,searches:0},
+  "Libby Morningstar":{logins:0,credits:0,searches:0},
 };
-
 const SN_CAP={days:12,searches:60,views:100,inmails:12};
 const ZI_CAP={logins:20,credits:100,searches:100};
-
 const REPS=[
   {name:"Allison Little",       manager:"Hani Goldstein",     role:"Manager"},
   {name:"Amelia Calin",         manager:"Jared Center",       role:"CSM"},
@@ -299,82 +354,278 @@ const REPS=[
   {name:"Zach Alpert",          manager:"Allison Little",     role:"CSM", tag:"New Hire"},
 ];
 
+// ── SCORING ──────────────────────────────────────────────────────────────────
 function cap(v,mx){return Math.min(v/mx,1);}
-function getL(name){const j=JUNO[name];return j?(j.fl+j.m2m)/2:0;}
-function getE(name){return Math.min((GONG[name]||0)/12,1);}
-function getSN(name){const s=SALESNAV[name];if(!s)return 0;return(cap(s.days,SN_CAP.days)+cap(s.searches,SN_CAP.searches)+cap(s.views,SN_CAP.views)+cap(s.inmails,SN_CAP.inmails))/4;}
-function getZI(name){const z=ZOOMINFO[name];if(!z)return 0;return(cap(z.logins,ZI_CAP.logins)+cap(z.credits,ZI_CAP.credits)+cap(z.searches,ZI_CAP.searches))/3;}
-function getP(name){return(getSN(name)+getZI(name))/2;}
-
+function getL(n){const j=JUNO[n];return j?(j.fl+j.m2m)/2:0;}
+function getE(n){return Math.min((GONG[n]||0)/12,1);}
+function getSN(n){const s=SALESNAV[n];if(!s)return 0;return(cap(s.days,SN_CAP.days)+cap(s.searches,SN_CAP.searches)+cap(s.views,SN_CAP.views)+cap(s.inmails,SN_CAP.inmails))/4;}
+function getZI(n){const z=ZOOMINFO[n];if(!z)return 0;return(cap(z.logins,ZI_CAP.logins)+cap(z.credits,ZI_CAP.credits)+cap(z.searches,ZI_CAP.searches))/3;}
+function getP(n){return(getSN(n)+getZI(n))/2;}
 const cache={};
 function calcScore(rep){
   if(cache[rep.name])return cache[rep.name];
   const l=getL(rep.name),e=getE(rep.name);
   let s;
-  if(rep.name==="Staci Eyer"){
-    s={total:0.6*getE("Amelia Cotton")+0.4*e,L:l,P:null,E:e};
-  } else if(rep.name==="Amelia Cotton"){
-    s={total:e,L:l,P:null,E:e};
-  } else if(rep.name==="Christina Lian Nunez"){
-    s={total:0.5*l+0.5*e,L:l,P:null,E:e};
-  } else if(rep.role==="Manager"){
+  if(rep.name==="Staci Eyer"){s={total:0.6*getE("Amelia Cotton")+0.4*e,L:l,P:null,E:e};}
+  else if(rep.name==="Amelia Cotton"){s={total:e,L:l,P:null,E:e};}
+  else if(rep.name==="Christina Lian Nunez"){s={total:0.5*l+0.5*e,L:l,P:null,E:e};}
+  else if(rep.role==="Manager"){
     const directs=REPS.filter(r=>r.manager===rep.name&&r.name!==rep.name);
     const scores=directs.map(d=>calcScore(d).total);
     const avg=scores.length?scores.reduce((a,b)=>a+b,0)/scores.length:0;
     s={total:0.6*avg+0.25*e+0.15*l,L:l,P:null,E:e,teamAvg:avg,directCount:directs.length};
-  } else if(rep.role==="CSM"){
-    s={total:0.6*l+0.4*e,L:l,P:null,E:e};
-  } else {
+  } else if(rep.role==="CSM"){s={total:0.6*l+0.4*e,L:l,P:null,E:e};}
+  else{
     const p=getP(rep.name);
     const sn=SALESNAV[rep.name]||{days:0,searches:0,views:0,inmails:0};
     const zi=ZOOMINFO[rep.name]||{logins:0,credits:0,searches:0};
     s={total:0.30*l+0.35*p+0.35*e,L:l,P:p,E:e,
       snRaw:sn,ziRaw:zi,snPct:Math.round(getSN(rep.name)*100),ziPct:Math.round(getZI(rep.name)*100)};
   }
-  cache[rep.name]=s;
-  return s;
+  cache[rep.name]=s;return s;
 }
 REPS.forEach(r=>calcScore(r));
 
-function pct(v){return v===null?null:Math.round(v*100);}
+// ── HELPERS ──────────────────────────────────────────────────────────────────
+function pct(v){return Math.round(v*100);}
 function tierInfo(v){
   if(v>=0.7)return{l:"High Adopter",c:"badge-high"};
   if(v>=0.4)return{l:"Mid Adopter",c:"badge-mid"};
   return{l:"Low Adopter",c:"badge-low"};
 }
-function tierOrder(v){if(v>=0.7)return 0;if(v>=0.4)return 1;return 2;}
-function barColor(v){if(v>=0.7)return"#3b6d11";if(v>=0.4)return"#854f0b";return"#a32d2d";}
-function barBg(v){if(v>=0.7)return"#eaf3de";if(v>=0.4)return"#faeeda";return"#fcebeb";}
-
+function tierOrder(v){return v>=0.7?0:v>=0.4?1:2;}
+function scoreColor(v){return v>=0.7?"#7dd463":v>=0.4?"#F8DC80":"#ff6b6b";}
+function scoreBg(v){return v>=0.7?"rgba(56,118,29,0.25)":v>=0.4?"rgba(248,220,128,0.15)":"rgba(255,10,0,0.15)";}
 function renderBar(v){
-  if(v===null)return'<span style="font-size:12px;color:#aaa;">—</span>';
+  if(v===null)return'<span style="font-size:12px;color:rgba(255,255,255,0.25);">—</span>';
   const p=pct(v);
-  return`<div class="bar-wrap"><div class="bar-bg" style="background:${barBg(v)};"><div class="bar-fill" style="width:${p}%;background:${barColor(v)};"></div></div><span style="font-size:12px;min-width:32px;text-align:right;color:${barColor(v)};font-weight:600;">${p}%</span></div>`;
+  return`<div class="bar-wrap"><div class="bar-bg"><div class="bar-fill" style="width:${p}%;background:${scoreColor(v)};"></div></div><span style="font-size:12px;min-width:32px;text-align:right;color:${scoreColor(v)};font-weight:700;">${p}%</span></div>`;
 }
-
 function jStr(v){return v===1?"Complete":v===0.5?"In progress":"Not started";}
 
+// ── SPEEDOMETER ──────────────────────────────────────────────────────────────
+function drawGauge(canvasId, onTargetRate, anyRate){
+  const canvas=document.getElementById(canvasId);
+  if(!canvas)return;
+  const ctx=canvas.getContext('2d');
+  const W=220,H=130;
+  canvas.width=W;canvas.height=H;
+  const cx=W/2,cy=H-8,r=88;
+  function pctToAngle(p){return Math.PI+(p/100)*Math.PI;}
+
+  // Background track
+  ctx.beginPath();
+  ctx.arc(cx,cy,r,Math.PI,2*Math.PI);
+  ctx.arc(cx,cy,r-24,2*Math.PI,Math.PI,true);
+  ctx.closePath();
+  ctx.fillStyle="rgba(255,255,255,0.06)";
+  ctx.fill();
+
+  // Vivid color zones
+  const zones=[
+    {from:0,to:40,color:"#c0392b"},
+    {from:40,to:70,color:"#e6a817"},
+    {from:70,to:100,color:"#27ae60"},
+  ];
+  zones.forEach(z=>{
+    ctx.beginPath();
+    ctx.arc(cx,cy,r,pctToAngle(z.from),pctToAngle(z.to));
+    ctx.arc(cx,cy,r-24,pctToAngle(z.to),pctToAngle(z.from),true);
+    ctx.closePath();
+    ctx.fillStyle=z.color;
+    ctx.fill();
+  });
+
+  // Any-activity arc (outer ring) -- bright blue
+  ctx.beginPath();
+  ctx.arc(cx,cy,r+8,Math.PI,pctToAngle(anyRate));
+  ctx.strokeStyle="#6CA6FF";
+  ctx.lineWidth=5;
+  ctx.lineCap="round";
+  ctx.stroke();
+
+  // Zone boundary ticks
+  [40,70].forEach(p=>{
+    const a=pctToAngle(p);
+    ctx.beginPath();
+    ctx.moveTo(cx+Math.cos(a)*(r-24),cy+Math.sin(a)*(r-24));
+    ctx.lineTo(cx+Math.cos(a)*r,cy+Math.sin(a)*r);
+    ctx.strokeStyle="rgba(255,255,255,0.5)";
+    ctx.lineWidth=2;
+    ctx.stroke();
+  });
+
+  // On-target needle -- bright white
+  const needleAngle=pctToAngle(onTargetRate);
+  ctx.beginPath();
+  ctx.moveTo(cx,cy);
+  ctx.lineTo(cx+Math.cos(needleAngle)*(r-2),cy+Math.sin(needleAngle)*(r-2));
+  ctx.strokeStyle="#ffffff";
+  ctx.lineWidth=3;
+  ctx.lineCap="round";
+  ctx.stroke();
+
+  // Center dot
+  ctx.beginPath();
+  ctx.arc(cx,cy,7,0,Math.PI*2);
+  ctx.fillStyle="#fff";
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(cx,cy,4,0,Math.PI*2);
+  ctx.fillStyle="#012754";
+  ctx.fill();
+
+  // Zone labels
+  ctx.font="bold 10px Inter,sans-serif";
+  ctx.textAlign="center";
+  ctx.fillStyle="rgba(255,255,255,0.75)";
+  ctx.fillText("Low",cx-68,cy-36);
+  ctx.fillText("Mid",cx,cy-92);
+  ctx.fillText("High",cx+68,cy-36);
+}
+
+// ── TOOL CARDS ───────────────────────────────────────────────────────────────
+function renderTools(){
+  const EXCLUDE=new Set(["Blake Kramer","Libby Morningstar","Greg Ehrlich"]);
+  const sellers=REPS.filter(r=>r.role==="Sales Rep"&&!EXCLUDE.has(r.name));
+
+  // GONG
+  const gongElig=REPS.filter(r=>!EXCLUDE.has(r.name));
+  const gongAny=gongElig.filter(r=>(GONG[r.name]||0)>0);
+  const gongTarget=gongElig.filter(r=>(GONG[r.name]||0)>=12);
+  const gongPartial=gongElig.filter(r=>{const c=GONG[r.name]||0;return c>0&&c<12;});
+  const gongZero=gongElig.filter(r=>(GONG[r.name]||0)===0);
+
+  // SALES NAV
+  const snElig=sellers;
+  const snAny=snElig.filter(r=>(SALESNAV[r.name]?.days||0)>0);
+  const snTarget=snElig.filter(r=>(SALESNAV[r.name]?.days||0)>=12&&(SALESNAV[r.name]?.searches||0)>=60);
+  const snPartial=snElig.filter(r=>(SALESNAV[r.name]?.days||0)>0&&!((SALESNAV[r.name]?.days||0)>=12&&(SALESNAV[r.name]?.searches||0)>=60));
+  const snZero=snElig.filter(r=>!(SALESNAV[r.name]?.days||0));
+
+  // ZOOMINFO
+  const ziElig=sellers;
+  const ziAny=ziElig.filter(r=>(ZOOMINFO[r.name]?.logins||0)>0);
+  const ziTarget=ziElig.filter(r=>(ZOOMINFO[r.name]?.logins||0)>=20&&(ZOOMINFO[r.name]?.credits||0)>=100);
+  const ziPartial=ziElig.filter(r=>(ZOOMINFO[r.name]?.logins||0)>0&&!((ZOOMINFO[r.name]?.logins||0)>=20&&(ZOOMINFO[r.name]?.credits||0)>=100));
+  const ziZero=ziElig.filter(r=>!(ZOOMINFO[r.name]?.logins||0));
+
+  const tools=[
+    {
+      id:"gong",name:"Gong",cost:"$1,631 / seat",
+      scope:"All GTM — sellers, CSMs, managers, ICs",
+      elig:gongElig.length,any:gongAny.length,target:gongTarget.length,
+      anyRate:Math.round(gongAny.length/gongElig.length*100),
+      targetRate:Math.round(gongTarget.length/gongElig.length*100),
+      zeroList:gongZero,partialList:gongPartial,
+      targetDef:"12+ calls listened (3 per week)",
+      anyDef:"1 or more calls listened",
+      expectations:[
+        "Listen to <strong>3 calls per week</strong> (12/mo minimum)",
+        "Focus on calls from top accounts and new logos",
+      ],
+    },
+    {
+      id:"salesnav",name:"Sales Navigator",cost:"$1,800 / seat",
+      scope:"Sales Reps only",
+      elig:snElig.length,any:snAny.length,target:snTarget.length,
+      anyRate:Math.round(snAny.length/snElig.length*100),
+      targetRate:Math.round(snTarget.length/snElig.length*100),
+      zeroList:snZero,partialList:snPartial,
+      targetDef:"12+ days active AND 60+ searches",
+      anyDef:"1 or more days active",
+      expectations:[
+        "Active <strong>12 days/mo</strong> (3x per week)",
+        "<strong>60 searches/mo</strong> minimum",
+        "<strong>100 profile views/mo</strong>",
+        "<strong>12 InMails/mo</strong>",
+      ],
+    },
+    {
+      id:"zoominfo",name:"ZoomInfo",cost:"$1,300 / seat",
+      scope:"Sales Reps only",
+      elig:ziElig.length,any:ziAny.length,target:ziTarget.length,
+      anyRate:Math.round(ziAny.length/ziElig.length*100),
+      targetRate:Math.round(ziTarget.length/ziElig.length*100),
+      zeroList:ziZero,partialList:ziPartial,
+      targetDef:"20+ logins AND 100+ credits used",
+      anyDef:"1 or more logins",
+      expectations:[
+        "<strong>20 logins/mo</strong> (~1x per working day)",
+        "<strong>100 credits used/mo</strong> (exporting contacts)",
+        "<strong>100 searches/mo</strong>",
+      ],
+    },
+  ];
+
+  document.getElementById('tool-cards').innerHTML=tools.map(t=>{
+    const tCls=t.targetRate>=70?"bench-current-high":t.targetRate>=40?"bench-current-mid":"bench-current-low";
+    const aCls=t.anyRate>=70?"bench-current-high":t.anyRate>=40?"bench-current-mid":"bench-current-low";
+    return`<div class="tool-card">
+      <div class="tool-header">
+        <h3>${t.name}</h3>
+        <span class="tool-cost">${t.cost}</span>
+      </div>
+      <div class="tool-scope">${t.scope}</div>
+      <div class="gauge-wrap"><canvas id="gauge-${t.id}"></canvas></div>
+      <div class="tier-row">
+        <div class="tier-box on-target">
+          <div class="tv">${t.targetRate}%</div>
+          <div class="tl">On Target</div>
+          <div class="td">${t.target} of ${t.elig} · ${t.targetDef}</div>
+        </div>
+        <div class="tier-box any-activity">
+          <div class="tv">${t.anyRate}%</div>
+          <div class="tl">Any Activity</div>
+          <div class="td">${t.any} of ${t.elig} · ${t.anyDef}</div>
+        </div>
+      </div>
+      <div class="bench-row">
+        <span class="bench-tag bench-low">Low &lt;40%</span>
+        <span class="bench-tag bench-mid">Mid 40–70%</span>
+        <span class="bench-tag bench-high">High 70%+</span>
+        <span class="bench-tag ${tCls}">On-target: ${t.targetRate>=70?"High":t.targetRate>=40?"Mid":"Low"}</span>
+        <span class="bench-tag ${aCls}">Any activity: ${t.anyRate>=70?"High":t.anyRate>=40?"Mid":"Low"}</span>
+      </div>
+      <div class="def-box">
+        <div class="def-title">Monthly expectations per rep</div>
+        ${t.expectations.map(e=>`<div class="def-row">${e}</div>`).join('')}
+      </div>
+      ${t.zeroList.length?`<div class="inactive-box">
+        <div class="inactive-title">No activity this month (${t.zeroList.length})</div>
+        <div class="inactive-names">${t.zeroList.map(r=>r.name).join(' · ')}</div>
+      </div>`:''}
+    </div>`;
+  }).join('');
+
+  setTimeout(()=>{
+    tools.forEach(t=>drawGauge(`gauge-${t.id}`,t.targetRate,t.anyRate));
+  },50);
+}
+
+// ── TABLE ────────────────────────────────────────────────────────────────────
 function detailHtml(rep,s){
   const j=JUNO[rep.name]||{fl:0,m2m:0};
   let blocks=[];
   blocks.push(`<div class="detail-block"><div class="dlabel">Juno Journey</div>Financial Literacy: <strong>${jStr(j.fl)}</strong><br>Moments to Momentum: <strong>${jStr(j.m2m)}</strong></div>`);
-  blocks.push(`<div class="detail-block"><div class="dlabel">Gong (Call Review)</div>Calls listened: <strong>${GONG[rep.name]||0}</strong> / 12 target</div>`);
+  blocks.push(`<div class="detail-block"><div class="dlabel">Gong</div>Calls listened: <strong>${GONG[rep.name]||0}</strong> / 12 target</div>`);
   if(rep.role==="Sales Rep"&&s.snRaw){
     const sn=s.snRaw,zi=s.ziRaw||{logins:0,credits:0,searches:0};
-    blocks.push(`<div class="detail-block"><div class="dlabel">Sales Navigator → ${s.snPct}%</div>Days active: <strong>${sn.days}</strong>/12 &nbsp; Searches: <strong>${sn.searches}</strong>/60<br>Profile views: <strong>${sn.views}</strong>/100 &nbsp; InMails: <strong>${sn.inmails}</strong>/12</div>`);
+    blocks.push(`<div class="detail-block"><div class="dlabel">Sales Navigator → ${s.snPct}%</div>Days: <strong>${sn.days}</strong>/12 &nbsp; Searches: <strong>${sn.searches}</strong>/60<br>Views: <strong>${sn.views}</strong>/100 &nbsp; InMails: <strong>${sn.inmails}</strong>/12</div>`);
     blocks.push(`<div class="detail-block"><div class="dlabel">ZoomInfo → ${s.ziPct}%</div>Logins: <strong>${zi.logins}</strong>/20 &nbsp; Credits: <strong>${zi.credits}</strong>/100<br>Searches: <strong>${zi.searches}</strong>/100</div>`);
   }
   if(rep.role==="Manager"&&s.teamAvg!==undefined){
     blocks.push(`<div class="detail-block"><div class="dlabel">Team</div>Team avg: <strong>${Math.round(s.teamAvg*100)}%</strong> across <strong>${s.directCount}</strong> direct reports</div>`);
   }
   if(rep.name==="Staci Eyer"){
-    blocks.push(`<div class="detail-block"><div class="dlabel">Special rule</div>Amelia Cotton Call Review: <strong>${Math.round(getE("Amelia Cotton")*100)}%</strong> (60% weight)<br>Own Call Review: <strong>${Math.round(getE("Staci Eyer")*100)}%</strong> (40% weight)</div>`);
+    blocks.push(`<div class="detail-block"><div class="dlabel">Special Rule</div>Amelia Cotton Call Review: <strong>${Math.round(getE("Amelia Cotton")*100)}%</strong> (60%)<br>Own Call Review: <strong>${Math.round(getE("Staci Eyer")*100)}%</strong> (40%)</div>`);
   }
   return`<div class="detail-inner">${blocks.join('')}</div>`;
 }
 
-let sortCol='score';
-let sortDir=1;
+function getE(n){return Math.min((GONG[n]||0)/12,1);}
+
+let sortCol='score',sortDir=1;
 const expanded=new Set();
 
 function setSort(col){
@@ -396,7 +647,6 @@ function render(){
   const rf=document.getElementById('filter-role').value;
   const mf=document.getElementById('filter-manager').value;
   const sf=document.getElementById('filter-status').value;
-
   let rows=REPS.map(r=>({...r,s:calcScore(r)}));
   if(rf)rows=rows.filter(r=>r.role===rf);
   if(mf)rows=rows.filter(r=>r.manager===mf);
@@ -406,13 +656,12 @@ function render(){
 
   const tot=rows.map(r=>r.s.total);
   const avg=tot.length?tot.reduce((a,b)=>a+b,0)/tot.length:0;
-
   document.getElementById('summary-cards').innerHTML=`
-    <div class="mcard"><div class="mlabel">Avg enablement score</div><div class="mvalue">${Math.round(avg*100)}%</div></div>
-    <div class="mcard"><div class="mlabel">High Adopters</div><div class="mvalue" style="color:#3b6d11;">${rows.filter(r=>r.s.total>=0.7).length}</div><div class="msub">70% or above</div></div>
-    <div class="mcard"><div class="mlabel">Mid Adopters</div><div class="mvalue" style="color:#854f0b;">${rows.filter(r=>r.s.total>=0.4&&r.s.total<0.7).length}</div><div class="msub">40–69%</div></div>
-    <div class="mcard"><div class="mlabel">Low Adopters</div><div class="mvalue" style="color:#a32d2d;">${rows.filter(r=>r.s.total<0.4).length}</div><div class="msub">Below 40%</div></div>
-    <div class="mcard"><div class="mlabel">Total reps</div><div class="mvalue">${rows.length}</div></div>
+    <div class="mcard"><div class="mlabel">Avg Score</div><div class="mvalue">${Math.round(avg*100)}%</div></div>
+    <div class="mcard"><div class="mlabel">High Adopters</div><div class="mvalue" style="color:#7dd463;">${rows.filter(r=>r.s.total>=0.7).length}</div><div class="msub">70% or above</div></div>
+    <div class="mcard"><div class="mlabel">Mid Adopters</div><div class="mvalue" style="color:#F8DC80;">${rows.filter(r=>r.s.total>=0.4&&r.s.total<0.7).length}</div><div class="msub">40–69%</div></div>
+    <div class="mcard"><div class="mlabel">Low Adopters</div><div class="mvalue" style="color:#ff6b6b;">${rows.filter(r=>r.s.total<0.4).length}</div><div class="msub">Below 40%</div></div>
+    <div class="mcard"><div class="mlabel">Total Reps</div><div class="mvalue">${rows.length}</div></div>
   `;
 
   const sortFns={
@@ -429,20 +678,21 @@ function render(){
     const t=tierInfo(r.s.total);
     const rid='dr-'+i;
     const isExp=expanded.has(r.name);
-    const prospCell=r.s.P!==null?renderBar(r.s.P):'<span style="font-size:12px;color:#aaa;">—</span>';
+    const tagHtml=r.tag?`<span class="rep-tag ${r.tag==='Parental Leave'?'rep-tag-leave':'rep-tag-newhire'}">${r.tag}</span>`:'';
+    const prospCell=r.s.P!==null?renderBar(r.s.P):'<span style="font-size:12px;color:rgba(255,255,255,0.2);">—</span>';
     return`<tr class="data-row">
       <td><button class="expand-btn" onclick="toggle('${r.name}','${rid}')">${isExp?'▲':'▼'}</button></td>
-      <td style="font-weight:600;">${r.name}${r.tag?`<span class="rep-tag ${r.tag==='Parental Leave'?'rep-tag-leave':'rep-tag-newhire'}">${r.tag}</span>`:''}</td>
-      <td style="color:#6b6b67;">${r.manager}</td>
-      <td style="color:#6b6b67;font-size:12px;">${r.role}</td>
+      <td style="font-weight:600;color:#fff;">${r.name}${tagHtml}</td>
+      <td style="color:rgba(255,255,255,0.45);font-size:12px;">${r.manager}</td>
+      <td style="color:rgba(255,255,255,0.4);font-size:11px;">${r.role}</td>
       <td>${renderBar(r.s.L)}</td>
       <td>${prospCell}</td>
       <td>${renderBar(r.s.E)}</td>
-      <td style="font-weight:700;font-size:14px;">${pct(r.s.total)}%</td>
+      <td style="font-weight:800;font-size:15px;color:#fff;">${pct(r.s.total)}%</td>
       <td><span class="badge ${t.c}">${t.l}</span></td>
     </tr>
     <tr id="${rid}" style="display:${isExp?'table-row':'none'};">
-      <td colspan="9" class="detail-row">${detailHtml(r,r.s)}</td>
+      <td colspan="9" class="detail-td">${detailHtml(r,r.s)}</td>
     </tr>`;
   }).join('');
 }
@@ -454,6 +704,7 @@ function toggle(name,rid){
 }
 
 populateManagers();
+renderTools();
 setSort('score');
 </script>
 </body>
